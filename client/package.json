@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "setup:components": "node -e \"const fs = require('fs'); const path = require('path'); ['src/components', 'src/assets'].forEach(dir => { const fullPath = path.join(process.cwd(), dir); if (!fs.existsSync(fullPath)) { fs.mkdirSync(fullPath, { recursive: true }); console.log(`Created: ${dir}`); } else { console.log(`Already exists: ${dir}`); } }); console.log('\\n✅ Folder structure ready!\\n');\""
   },
   "dependencies": {
     "react": "^19.1.1",
