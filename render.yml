@@ -1,0 +1,52 @@
+# render.yaml - Render deployment configuration for Volley Stats app
+
+services:
+  # Backend API Service (Flask)
+  - type: web
+    name: eyes-sky-backend
+    runtime: docker
+    region: oregon
+    plan: free
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server    
+    envVars:
+      - key: RENDER
+        value: true
+      - key: FLASK_ENV
+        value: production
+      - key: CORS_ORIGINS
+        value: https://eyesinthesky.onrender.com
+      - key: HF_TOKEN
+        sync: false
+    healthCheckPath: /api/health
+    autoDeploy: false
+
+  # Frontend Static Site (React)
+  - type: static
+    name: eyes-sky-frontend
+    runtime: static
+    region: oregon
+    plan: free
+    rootDir: ./client
+    buildCommand: npm install && npm run build
+    publishDir: dist
+    pullRequestPreviewsEnabled: true
+    envVars:
+      - key: VITE_API_URL
+        value: https://eyes-sky-api.onrender.com
+      - key: NODE_ENV
+        value: production
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-XSS-Protection
+        value: 1; mode=block
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

@@ -1,2 +1,227 @@
-# eyes-in-sky
-UC Berkeley MIDS Capstone project. The purpose is to develop a machine learning powered application that uses satellite imagery to detect illegal trafficking.
+# 🛰️ Eyes in the Sky
+### Catching the Bad Guys with Satellites and AI
+
+*UC Berkeley MIDS Capstone Project - Fighting trafficking one pixel at a time*
+
+---
+
+## 🎯 What's This All About?
+
+**The Problem**: Bad actors are smuggling people, drugs, and other illegal stuff across oceans and remote coastlines where nobody's watching.
+
+**Our Solution**: Use satellite images + smart AI to spot suspicious boats and activities. Think of it as a digital watchtower that never sleeps! 
+
+**The Twist**: We built this with privacy first - no creepy surveillance, just helping the good guys catch the bad guys.
+
+---
+
+## 🚀 Cool Features
+
+Our web app lets analysts:
+- 📤 **Upload satellite photos** and run AI detection
+- 🗺️ **Interactive maps** showing risky areas and suspicious boats  
+- 📊 **Risk scores** - how suspicious is this location?
+- 📈 **Time analysis** - what changed between last week and this week?
+- 📄 **Generate reports** for the people who need to know
+- 🔒 **Privacy built-in** - everything stays anonymous and aggregated
+
+---
+
+## 🛠️ Quick Start Guide
+
+### What You Need First
+- **Python 3.8+** (for the AI stuff)
+- **Node.js 16+** (for the web app)
+- **Git** (to download the code)
+
+### 1️⃣ Get the Code
+```bash
+git clone <your-repo-url>
+cd eyes-in-sky
+```
+
+### 2️⃣ Set Up the AI Backend (Python)
+
+**Mac/Linux:**
+```bash
+# Create a virtual environment (like a clean room for Python)
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install all the AI libraries
+pip install -r server/requirements.txt
+```
+
+**Windows:**
+```bash
+# Create virtual environment
+python -m venv .venv
+.venv\Scripts\activate
+
+# Install dependencies
+pip install -r server/requirements.txt
+```
+
+### 3️⃣ Set Up the Web App (React)
+
+**Don't have Node.js?** Get it from [nodejs.org](https://nodejs.org/) 
+
+```bash
+# Go to the web app folder
+cd client
+
+# Install all the web stuff
+npm install
+
+# Go back to main folder
+cd ..
+```
+
+### 4️⃣ Fire It Up! 🔥
+
+**Start the AI server:**
+```bash
+# Make sure Python environment is active
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
+cd server
+python app.py
+```
+*Your AI server will run on http://localhost:5000*
+
+**Start the web app (in a new terminal):**
+```bash
+cd client
+npm run dev
+```
+*Your web app will run on http://localhost:5173*
+
+---
+
+## 🧠 The AI Magic Behind the Scenes
+
+We use multiple AI techniques to catch suspicious activity:
+
+### 🔍 **Ship Detection**
+- Spots boats in satellite images, even tiny ones
+- Works in all weather (thanks to radar satellites!)
+
+### 📡 **Tracking Analysis** 
+- Notices when boats "go dark" (turn off GPS)
+- Flags weird routes and suspicious meetups
+
+### 🌙 **Night Activity**
+- Detects unusual lights on beaches at night
+- Catches secret launches under cover of darkness
+
+### 📷 **Change Detection**
+- Compares "before" and "after" satellite photos
+- Spots new boat ramps or camps that shouldn't be there
+
+### 🎯 **Smart Risk Scoring**
+- Combines all the evidence into a single risk score
+- Helps analysts focus on the most suspicious stuff first
+
+---
+
+## 🔒 Privacy First (This is Important!)
+
+We're not building Big Brother! Here's how we keep it ethical:
+
+- ✅ **No personal info** - we don't track individuals
+- ✅ **Blurry by design** - all locations are fuzzy (100-500m areas)
+- ✅ **Human oversight** - real people verify everything before action
+- ✅ **Event-focused** - we flag "something happened here" not "person X did Y"
+
+---
+
+## 🗂️ Project Structure
+```
+eyes-in-sky/
+├── 🌐 client/              # The web app (React)
+├── 🤖 server/              # The AI server (Python)
+├── 📦 .venv/               # Python virtual environment
+└── 🐳 docker-compose.yml  # Run everything with Docker
+```
+
+---
+
+## 🎨 What We Built With
+
+**🤖 AI & Backend:**
+- Python + PyTorch (the brain)
+- Satellite data from NASA/ESA
+- FastAPI (connects web to AI)
+
+**🌐 Web App:**
+- React (the interface)
+- Interactive maps (Mapbox)
+- Charts and visualizations
+
+**☁️ Data Sources:**
+- Sentinel satellites (free satellite images!)
+- Ship tracking data
+- UN trafficking reports
+
+---
+
+## 🚧 Troubleshooting
+
+**🔧 Common Fixes:**
+
+**"Port already in use"**
+- Someone else is using that port. Try `npm run dev -- --port 3001`
+
+**"Module not found"**  
+- Check your virtual environment: `source .venv/bin/activate`
+
+**"Node.js issues"**
+- Try: `npm cache clean --force` then `npm install`
+
+**"Python environment problems"**
+- Delete `.venv` folder and start over with step 2
+
+---
+
+## 🚀 Want to Contribute?
+
+**Important**: This fights real-world trafficking, so privacy and ethics matter!
+
+1. 🍴 Fork the repo
+2. 🌿 Create your feature branch
+3. 🔒 **Privacy check** - make sure no personal data leaks
+4. ✅ Test everything thoroughly  
+5. 📤 Submit a pull request
+
+---
+
+## 📚 The Bigger Picture
+
+**By the numbers:**
+- 50+ million people in modern slavery worldwide
+- $236 billion generated by forced labor annually
+- $1.5+ trillion in trafficking and counterfeiting
+
+**Our impact**: Even small improvements in detection can save lives and disrupt criminal networks.
+
+---
+
+## 📞 Get in Touch
+
+**Team**: UC Berkeley MIDS Students  
+**Course**: MIDS 210 Capstone  
+**Lead**: Jasmol Singh Dhesi
+
+Questions? Issues? Cool ideas? Open an issue or reach out through UC Berkeley MIDS!
+
+---
+
+## 🙏 Acknowledgments
+
+Thanks to:
+- UC Berkeley MIDS Program
+- NASA/ESA for free satellite data
+- Open source community
+- Organizations fighting trafficking worldwide
+
+*Built with ❤️ and a mission to make the world safer*
