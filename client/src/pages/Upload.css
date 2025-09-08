@@ -4,10 +4,10 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 70vh;
-    animation: fadeIn 0.6s ease;
+    min-height: calc(100vh - var(--nav-height));
     width: 100%;
-    padding: 0 var(--spacing-xl);
+    padding: var(--spacing-2xl) var(--spacing-xl);
+    animation: fadeIn 0.6s ease;
 }
 
 .upload-container {
@@ -15,22 +15,24 @@
     border: 1px solid var(--border-color);
     border-radius: 16px;
     padding: var(--spacing-2xl);
-    max-width: 600px;
     width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 .upload-header {
     text-align: center;
-    margin-bottom: var(--spacing-2xl);
+    margin-bottom: var(--spacing-xl);
 }
 
 .upload-header h2 {
-    font-size: 2rem;
+    font-size: clamp(1.5rem, 3vw, 2rem);
     margin-bottom: var(--spacing-sm);
 }
 
 .upload-header p {
     color: var(--text-secondary);
+    font-size: clamp(0.875rem, 1.5vw, 1rem);
 }
 
 /* Dropzone */
@@ -42,7 +44,7 @@
     cursor: pointer;
     background: var(--dark-bg);
     position: relative;
-    min-height: 300px;
+    min-height: 280px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -69,34 +71,35 @@
 }
 
 .upload-icon {
-    width: 64px;
-    height: 64px;
+    width: clamp(48px, 10vw, 64px);
+    height: clamp(48px, 10vw, 64px);
     margin: 0 auto var(--spacing-md);
     color: var(--text-muted);
 }
 
 .dropzone-content h3 {
-    font-size: 1.25rem;
+    font-size: clamp(1rem, 2vw, 1.25rem);
     margin-bottom: var(--spacing-sm);
 }
 
 .dropzone-content p {
     color: var(--text-secondary);
     margin-bottom: var(--spacing-lg);
+    font-size: clamp(0.875rem, 1.5vw, 1rem);
 }
 
 .supported-formats {
     display: flex;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-xs);
     justify-content: center;
     flex-wrap: wrap;
 }
 
 .supported-formats span {
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: 4px 8px;
     background: var(--dark-surface);
     border-radius: 6px;
-    font-size: 0.875rem;
+    font-size: clamp(0.7rem, 1.2vw, 0.875rem);
     color: var(--text-secondary);
 }
 
@@ -107,7 +110,7 @@
 
 .image-preview {
     width: 100%;
-    height: 200px;
+    height: 180px;
     margin-bottom: var(--spacing-md);
     border-radius: 8px;
     overflow: hidden;
@@ -130,8 +133,8 @@
 }
 
 .file-icon {
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
     color: var(--primary);
     flex-shrink: 0;
 }
@@ -139,32 +142,34 @@
 .file-info {
     flex: 1;
     text-align: left;
+    min-width: 0;
 }
 
 .file-name {
     font-weight: 600;
     margin-bottom: var(--spacing-xs);
     word-break: break-all;
+    font-size: clamp(0.875rem, 1.5vw, 1rem);
 }
 
 .file-size {
     color: var(--text-secondary);
-    font-size: 0.875rem;
+    font-size: clamp(0.75rem, 1.2vw, 0.875rem);
 }
 
 .remove-file {
     position: absolute;
     top: var(--spacing-sm);
     right: var(--spacing-sm);
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     background: var(--danger);
     color: white;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     line-height: 1;
     border: none;
     cursor: pointer;
@@ -230,21 +235,60 @@
     }
 }
 
-/* Responsive */
+/* Mobile Responsive */
 @media (max-width: 768px) {
+    .upload-page {
+        padding: var(--spacing-lg);
+    }
+
     .upload-container {
         padding: var(--spacing-lg);
+        max-width: 100%;
     }
 
     .dropzone {
         padding: var(--spacing-lg);
+        min-height: 240px;
     }
 
     .upload-actions {
         flex-direction: column;
+        align-items: center;
+        width: 100%;
     }
 
     .upload-actions button {
         width: 100%;
+        max-width: 280px;
+        justify-content: center;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .upload-page {
+        padding: var(--spacing-md);
+    }
+
+    .upload-container {
+        padding: var(--spacing-md);
+        border-radius: 12px;
+    }
+
+    .dropzone {
+        padding: var(--spacing-md);
+        min-height: 200px;
+    }
+
+    .upload-actions button {
+        max-width: 260px;
+    }
+
+    .image-preview {
+        height: 150px;
     }
 }
