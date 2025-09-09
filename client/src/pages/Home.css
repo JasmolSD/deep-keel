@@ -24,14 +24,19 @@
 
 .hero-badge {
     display: inline-block;
-    padding: var(--spacing-xs) var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    /* Bigger padding */
     background: rgba(0, 168, 255, 0.1);
     border: 1px solid var(--primary);
-    border-radius: 20px;
+    border-radius: 24px;
+    /* Slightly larger radius */
     color: var(--primary);
-    font-size: clamp(0.75rem, 1.5vw, 0.875rem);
+    font-size: clamp(0.875rem, 2vw, 1.125rem);
+    /* Bigger font */
     font-weight: 600;
     margin-bottom: var(--spacing-lg);
+    letter-spacing: 0.5px;
+    /* Better spacing */
 }
 
 .hero-title {

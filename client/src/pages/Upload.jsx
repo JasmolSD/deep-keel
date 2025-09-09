@@ -150,9 +150,6 @@ const UploadPage = ({ onFileUpload, uploading, error }) => {
                             </>
                         ) : (
                             <>
-                                <svg className="btn-icon" viewBox="0 0 24 24" fill="none">
-                                    <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z" fill="currentColor" />
-                                </svg>
                                 Run Analysis
                             </>
                         )}
