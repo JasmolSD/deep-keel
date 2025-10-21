@@ -10,9 +10,9 @@ import './App.css'
 
 // Import local images - these should be in your src/assets folder
 // If these don't exist, you can use the fallback URLs or create placeholder images
-import bgImage1 from './assets/satellite.jpg'
+import bgImage1 from './assets/destroyer.jpg'
 import bgImage2 from './assets/earth.jpg'
-import bgImage3 from './assets/ireland.jpg'
+import bgImage3 from './assets/whirlwind.jpg'
 
 function App() {
   const [activePage, setActivePage] = useState('home')
@@ -31,7 +31,7 @@ function App() {
   useEffect(() => {
     const interval = setInterval(() => {
       setBgImageIndex((prev) => (prev + 1) % backgroundImages.length)
-    }, 7000)
+    }, 60000)
     return () => clearInterval(interval)
   }, [])
 
@@ -105,12 +105,12 @@ function App() {
         <footer className="app-footer">
           <div className="footer-content">
             <div className="footer-brand">
-              <h3>Eyes in the Sky</h3>
-              <p>Privacy-First Maritime Security Analysis</p>
+              <h3>Deep Keel</h3>
+              <p>AI Warship Classification</p>
             </div>
             <div className="footer-info">
               <p>© 2025 UC Berkeley MIDS Capstone Project</p>
-              <p>Fighting trafficking with AI and satellite intelligence</p>
+              <p>Identifying warships with AI</p>
             </div>
           </div>
         </footer>

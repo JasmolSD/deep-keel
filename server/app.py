@@ -13,7 +13,7 @@ import time
 if os.getenv('RENDER') != 'true':
     try:
         from dotenv import load_dotenv
-        env_path = Path(__file__).parent / 'services' / '.env'
+        env_path = Path(__file__).parent / '.env'
         if env_path.exists():
             load_dotenv(dotenv_path=env_path)
             print("✓ Loaded .env file for local development")

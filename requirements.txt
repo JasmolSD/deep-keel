@@ -54,3 +54,16 @@ requests
 
 # --- SAR DATA ---
 asf_search
+geojson
+geopandas
+
+# --- AIS ---
+pyais
+folium
+scikit-learn
+
+# --- GFW ---
+gfw-api-python-client
+
+# --- CV ---
+opencv-python

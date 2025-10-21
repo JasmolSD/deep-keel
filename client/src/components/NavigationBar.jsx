@@ -62,8 +62,8 @@ const NavigationBar = ({ activePage, setActivePage, hasResults }) => {
                             className="logo-icon"
                         />
                         <div className="brand-text">
-                            <h1>Eyes in the Sky</h1>
-                            <p>Maritime Security Analysis</p>
+                            <h1>Deep Keel</h1>
+                            <p>AI Warship Classification</p>
                         </div>
                     </div>
                 </div>
