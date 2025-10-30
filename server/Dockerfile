@@ -1,7 +1,7 @@
 # Stage 1: Build dependencies
 FROM python:3.11-slim as builder
 
-WORKDIR /app
+WORKDIR /server
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
