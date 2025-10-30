@@ -28,7 +28,7 @@ else:
 app = Flask(__name__, static_folder="cache/static", static_url_path="/static")
 
 # Configure CORS properly
-CORS(app, origins=["http://localhost:5173", "http://localhost:3000", "https://eyesinthesky.onrender.com"])
+CORS(app, origins=["http://localhost:5173", "http://localhost:3000", "https://deepkeel-api.onrender.com"])
 
 # Configuration
 app.config['UPLOAD_FOLDER'] = 'cache/tmp'
