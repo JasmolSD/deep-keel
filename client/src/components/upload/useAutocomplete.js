@@ -1,6 +1,6 @@
 // upload/useAutocomplete.js
 import { useState } from 'react'
-import { AUTOCOMPLETE_DATA } from '../constants/uploadConstants'
+import { AUTOCOMPLETE_DATA } from './uploadConstants'
 
 export const useAutocomplete = () => {
     const [suggestions, setSuggestions] = useState({
