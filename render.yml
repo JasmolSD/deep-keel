@@ -3,19 +3,20 @@
 services:
   # Backend API Service (Flask)
   - type: web
-    name: deep-keel
+    name: deep-keel-api
     runtime: docker
     region: oregon
     plan: free
-    dockerfilePath: ./server/Dockerfile
-    dockerContext: ./server    
+    rootDir: ./server
+    dockerfilePath: .Dockerfile
+    dockerContext: .    
     envVars:
       - key: RENDER
         value: true
       - key: FLASK_ENV
         value: production
       - key: CORS_ORIGINS
-        value: https://deepkeel-api.onrender.com
+        value: https://deep-keel-api.onrender.com
       - key: HF_TOKEN
         sync: false
     healthCheckPath: /api/health
@@ -33,7 +34,7 @@ services:
     pullRequestPreviewsEnabled: true
     envVars:
       - key: VITE_API_URL
-        value: https://deepkeel.onrender.com
+        value: https://deep-keel-api.onrender.com
       - key: NODE_ENV
         value: production
     headers:
