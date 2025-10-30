@@ -3,7 +3,7 @@
 services:
   # Backend API Service (Flask)
   - type: web
-    name: eyes-sky-backend
+    name: deep-keel
     runtime: docker
     region: oregon
     plan: free
@@ -15,7 +15,7 @@ services:
       - key: FLASK_ENV
         value: production
       - key: CORS_ORIGINS
-        value: https://eyesinthesky.onrender.com
+        value: https://deepkeel-api.onrender.com
       - key: HF_TOKEN
         sync: false
     healthCheckPath: /api/health
@@ -23,7 +23,7 @@ services:
 
   # Frontend Static Site (React)
   - type: static
-    name: eyes-sky-frontend
+    name: deep-keel
     runtime: static
     region: oregon
     plan: free
@@ -33,7 +33,7 @@ services:
     pullRequestPreviewsEnabled: true
     envVars:
       - key: VITE_API_URL
-        value: https://eyes-sky-api.onrender.com
+        value: https://deepkeel.onrender.com
       - key: NODE_ENV
         value: production
     headers:
