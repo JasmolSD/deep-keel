@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
 
 # Copy and install requirements
 COPY requirements.txt .
+
 # Install with verbose output to see what fails
 RUN pip install --user --no-cache-dir -r requirements.txt || \
     (echo "Failed to install requirements. Trying one by one..." && \
@@ -23,13 +24,10 @@ RUN pip install --user --no-cache-dir -r requirements.txt || \
 # Stage 2: Runtime
 FROM python:3.11-slim
 
-WORKDIR /server
+WORKDIR /app
 
 # Copy installed packages from builder
 COPY --from=builder /root/.local /root/.local
-
-# Explicitly copy app.py first
-COPY app.py ./
 
 # Copy application code
 COPY . .
