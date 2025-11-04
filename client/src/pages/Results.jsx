@@ -118,7 +118,7 @@ const Results = () => {
 
             {results.anomalies && results.anomalies.length > 0 && (
                 <div className="anomalies-section">
-                    <h3>Detected Anomalies</h3>
+                    <h3>Potential Matches</h3>
                     <div className="anomalies-grid">
                         {results.anomalies.map((anomaly) => (
                             <div key={anomaly.id} className="anomaly-card">
