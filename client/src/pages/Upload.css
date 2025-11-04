@@ -637,3 +637,43 @@ input[type="datetime-local"].form-input::-webkit-calendar-picker-indicator {
         font-size: 0.8rem;
     }
 }
+
+/* Single Page Layout Additions */
+
+.classification-container.single-page {
+    max-width: 1200px;
+}
+
+.form-content-single-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2xl);
+}
+
+.single-page .section-tabs {
+    display: none;
+}
+
+/* Enhanced Form Section Styling for Single Page */
+.form-content-single-page .form-section {
+    background: linear-gradient(145deg, rgba(20, 20, 35, 0.4), rgba(15, 15, 28, 0.6));
+    border: 1px solid rgba(0, 168, 255, 0.15);
+    border-radius: 12px;
+    padding: var(--spacing-xl);
+    margin-bottom: 0;
+}
+
+.form-content-single-page .form-section h3 {
+    font-size: 1.35rem;
+    margin-bottom: var(--spacing-md);
+    color: var(--primary);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid rgba(0, 168, 255, 0.2);
+}
+
+/* Required Field Indicator */
+.required-star {
+    color: var(--danger, #ff4757);
+    margin-left: 4px;
+    font-weight: bold;
+}

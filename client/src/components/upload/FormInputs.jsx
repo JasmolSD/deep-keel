@@ -3,15 +3,15 @@ import { useState } from 'react'
 
 export const FormInput = ({ label, required, hint, ...props }) => (
     <div className="form-group">
-        <label>{label} {required && '*'}</label>
+        <label>{label} {required && <span className="required-star">*</span>}</label>
         <input className="form-input" {...props} />
         {hint && <span className="form-hint">{hint}</span>}
     </div>
 );
 
-export const FormSelect = ({ label, options, placeholder = "Select...", ...props }) => (
+export const FormSelect = ({ label, required, options, placeholder = "Select...", ...props }) => (
     <div className="form-group">
-        <label>{label}</label>
+        <label>{label} {required && <span className="required-star">*</span>}</label>
         <select className="form-input" {...props}>
             <option value="">{placeholder}</option>
             {options.map(opt => (
@@ -23,9 +23,9 @@ export const FormSelect = ({ label, options, placeholder = "Select...", ...props
     </div>
 );
 
-export const FormRange = ({ label, hint, minProps, maxProps }) => (
+export const FormRange = ({ label, required, hint, minProps, maxProps }) => (
     <div className="form-group range-group">
-        <label>{label}</label>
+        <label>{label} {required && <span className="required-star">*</span>}</label>
         <div className="range-inputs">
             <input type="number" className="form-input range-input" placeholder="Min" {...minProps} />
             <span className="range-separator">to</span>

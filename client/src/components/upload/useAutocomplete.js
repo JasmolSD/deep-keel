@@ -4,30 +4,24 @@ import { AUTOCOMPLETE_DATA } from './uploadConstants'
 
 export const useAutocomplete = () => {
     const [suggestions, setSuggestions] = useState({
-        flag: [],
-        registryPort: [],
-        vesselName: []
+        country: [],
+        base_port: []
     });
 
     const [showSuggestions, setShowSuggestions] = useState({
-        flag: false,
-        registryPort: false,
-        vesselName: false
+        country: false,
+        base_port: false
     });
 
     const handleAutocomplete = (field, value) => {
         let filtered = [];
 
-        if (field === 'flag') {
-            filtered = AUTOCOMPLETE_DATA.flags.filter(f =>
-                f.toLowerCase().includes(value.toLowerCase())
+        if (field === 'country') {
+            filtered = AUTOCOMPLETE_DATA.countries.filter(c =>
+                c.toLowerCase().includes(value.toLowerCase())
             );
-        } else if (field === 'registryPort') {
+        } else if (field === 'base_port') {
             filtered = AUTOCOMPLETE_DATA.ports.filter(p =>
-                p.toLowerCase().includes(value.toLowerCase())
-            );
-        } else if (field === 'vesselName') {
-            filtered = AUTOCOMPLETE_DATA.vesselPrefixes.filter(p =>
                 p.toLowerCase().includes(value.toLowerCase())
             );
         }

@@ -1,10 +1,24 @@
 // components/NavigationBar.jsx
 import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import shieldIcon from '../assets/shield.png'
 import './NavigationBar.css'
 
-const NavigationBar = ({ activePage, setActivePage, hasResults }) => {
+const NavigationBar = ({ hasResults }) => {
+    const navigate = useNavigate()
+    const location = useLocation()
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+    // Derive active page from current route
+    const getActivePageFromPath = (pathname) => {
+        if (pathname === '/' || pathname === '/home') return 'home'
+        if (pathname === '/upload') return 'upload'
+        if (pathname === '/results') return 'results'
+        if (pathname === '/about') return 'about'
+        return 'home'
+    }
+
+    const activePage = getActivePageFromPath(location.pathname)
 
     // Close menu when clicking outside
     useEffect(() => {
@@ -16,7 +30,6 @@ const NavigationBar = ({ activePage, setActivePage, hasResults }) => {
 
         if (mobileMenuOpen) {
             document.addEventListener('click', handleClickOutside)
-            // Prevent scrolling when menu is open
             document.body.style.overflow = 'hidden'
         }
 
@@ -42,7 +55,16 @@ const NavigationBar = ({ activePage, setActivePage, hasResults }) => {
         if (page === 'results' && !hasResults) {
             return // Don't navigate if no results
         }
-        setActivePage(page)
+
+        // Navigate using React Router
+        const routes = {
+            'home': '/',
+            'upload': '/upload',
+            'results': '/results',
+            'about': '/about'
+        }
+
+        navigate(routes[page])
         setMobileMenuOpen(false)
     }
 
@@ -119,7 +141,6 @@ const NavigationBar = ({ activePage, setActivePage, hasResults }) => {
                     </li>
                 </ul>
 
-                {/* Mobile menu overlay */}
                 {mobileMenuOpen && (
                     <div
                         className="mobile-menu-overlay"

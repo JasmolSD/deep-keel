@@ -1,11 +1,53 @@
 // pages/Results.jsx
 import './Results.css'
+import { useLocation, useNavigate } from 'react-router-dom';
 
-const ResultsPage = ({ results, onNewAnalysis }) => {
+const Results = () => {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const results = location.state?.results;
+
+    const handleNewAnalysis = () => {
+        navigate('/upload');
+    };
+
+    const handleDownloadReport = () => {
+        if (!results?.classification_data?.report_text) return;
+
+        // Create filename with timestamp
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        const filename = `warship_classification_report_${timestamp}.txt`;
+
+        // Create blob and download
+        const blob = new Blob([results.classification_data.report_text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     const getRiskLevel = (score) => {
         if (score < 0.3) return { level: 'Low', class: 'low' }
         if (score < 0.6) return { level: 'Medium', class: 'medium' }
         return { level: 'High', class: 'high' }
+    }
+
+    // Handle no results case
+    if (!results) {
+        return (
+            <div className="results-page">
+                <div className="results-header">
+                    <h2>No Results Available</h2>
+                    <button className="btn-primary" onClick={handleNewAnalysis}>
+                        New Analysis
+                    </button>
+                </div>
+            </div>
+        );
     }
 
     const risk = getRiskLevel(results.risk_score)
@@ -14,9 +56,19 @@ const ResultsPage = ({ results, onNewAnalysis }) => {
         <div className="results-page">
             <div className="results-header">
                 <h2>Analysis Complete</h2>
-                <button className="btn-secondary" onClick={onNewAnalysis}>
-                    New Analysis
-                </button>
+                <div className="header-actions">
+                    {results.classification_data?.report_text && (
+                        <button className="btn-secondary" onClick={handleDownloadReport}>
+                            <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+                                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor" />
+                            </svg>
+                            Download Report
+                        </button>
+                    )}
+                    <button className="btn-secondary" onClick={handleNewAnalysis}>
+                        New Analysis
+                    </button>
+                </div>
             </div>
 
             <div className="summary-cards">
@@ -64,7 +116,7 @@ const ResultsPage = ({ results, onNewAnalysis }) => {
                 </div>
             </div>
 
-            {results.anomalies.length > 0 && (
+            {results.anomalies && results.anomalies.length > 0 && (
                 <div className="anomalies-section">
                     <h3>Detected Anomalies</h3>
                     <div className="anomalies-grid">
@@ -102,27 +154,29 @@ const ResultsPage = ({ results, onNewAnalysis }) => {
                 </div>
             )}
 
-            <div className="metadata-section">
-                <h3>Analysis Details</h3>
-                <div className="metadata-card">
-                    <div className="metadata-row">
-                        <span className="metadata-label">Filename</span>
-                        <span className="metadata-value">{results.image_metadata.filename}</span>
-                    </div>
-                    <div className="metadata-row">
-                        <span className="metadata-label">File Size</span>
-                        <span className="metadata-value">{results.image_metadata.size_mb} MB</span>
-                    </div>
-                    <div className="metadata-row">
-                        <span className="metadata-label">Analyzed</span>
-                        <span className="metadata-value">
-                            {new Date(results.image_metadata.analysis_timestamp * 1000).toLocaleString()}
-                        </span>
+            {results.image_metadata && (
+                <div className="metadata-section">
+                    <h3>Analysis Details</h3>
+                    <div className="metadata-card">
+                        <div className="metadata-row">
+                            <span className="metadata-label">Filename</span>
+                            <span className="metadata-value">{results.image_metadata.filename}</span>
+                        </div>
+                        <div className="metadata-row">
+                            <span className="metadata-label">File Size</span>
+                            <span className="metadata-value">{results.image_metadata.size_mb} MB</span>
+                        </div>
+                        <div className="metadata-row">
+                            <span className="metadata-label">Analyzed</span>
+                            <span className="metadata-value">
+                                {new Date(results.image_metadata.analysis_timestamp * 1000).toLocaleString()}
+                            </span>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     )
 }
 
-export default ResultsPage
+export default Results

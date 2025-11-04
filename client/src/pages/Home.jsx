@@ -1,8 +1,10 @@
 // pages/Home.jsx
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import './Home.css'
 
-const HomePage = ({ onStart }) => {
+const HomePage = () => {
+    const navigate = useNavigate()
     const statsRef = useRef(null)
     const [isVisible, setIsVisible] = useState(false)
 
@@ -23,6 +25,10 @@ const HomePage = ({ onStart }) => {
         return () => observer.disconnect()
     }, [])
 
+    const handleStart = () => {
+        navigate('/upload')
+    }
+
     return (
         <div className="home-page">
             <section className="hero-section">
@@ -30,7 +36,7 @@ const HomePage = ({ onStart }) => {
                     <div className="hero-badge">AI-Powered Detection</div>
                     <h1 className="hero-title">
                         Protecting The Seas with
-                        <span className="hero-highlight">Machine Learning and AI</span>
+                        <span className="hero-highlight"> Machine Learning and AI</span>
                     </h1>
                     <p className="hero-description">
                         The sea-sentinel engine is a real-time classification engine designed for decision support.
@@ -39,7 +45,7 @@ const HomePage = ({ onStart }) => {
                         streamlining situational awareness tasks.
                     </p>
                     <div className="hero-actions">
-                        <button className="btn-primary btn-large" onClick={onStart}>
+                        <button className="btn-primary btn-large" onClick={handleStart}>
                             Start Analysis
                         </button>
                         <button className="btn-secondary btn-large" onClick={() => document.getElementById('learn-more').scrollIntoView({ behavior: 'smooth' })}>
@@ -60,7 +66,7 @@ const HomePage = ({ onStart }) => {
                                 </svg>
                             </div>
                             <h3>Upload Observations</h3>
-                            <p>Upload ship desciptors using a user-friendly form.</p>
+                            <p>Upload ship descriptors using a user-friendly form.</p>
                         </div>
                         <div className="feature-card">
                             <div className="feature-icon">

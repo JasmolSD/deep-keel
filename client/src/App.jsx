@@ -1,6 +1,6 @@
 // App.jsx
 import { useState, useEffect } from 'react'
-import { uploadFile } from './api'
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
 import NavigationBar from './components/NavigationBar'
 import HomePage from './pages/Home'
 import UploadPage from './pages/Upload'
@@ -14,18 +14,17 @@ import bgImage1 from './assets/destroyer.jpg'
 import bgImage2 from './assets/earth.jpg'
 import bgImage3 from './assets/whirlwind.jpg'
 
-function App() {
+// Wrapper component to handle routing logic
+function AppContent() {
+  const navigate = useNavigate()
   const [activePage, setActivePage] = useState('home')
-  const [results, setResults] = useState(null)
-  const [uploading, setUploading] = useState(false)
-  const [error, setError] = useState(null)
   const [bgImageIndex, setBgImageIndex] = useState(0)
 
-  // Try to use local images, fallback to URLs
+  // Try to use local images
   const backgroundImages = [
-    bgImage1 || bgImages[0],
-    bgImage2 || bgImages[1],
-    bgImage3 || bgImages[2]
+    bgImage1,
+    bgImage2,
+    bgImage3
   ]
 
   useEffect(() => {
@@ -35,25 +34,9 @@ function App() {
     return () => clearInterval(interval)
   }, [])
 
-  const handleFileUpload = async (file) => {
-    setUploading(true)
-    setError(null)
-
-    try {
-      const response = await uploadFile(file)
-      setResults(response.results)
-      setActivePage('results')
-    } catch (err) {
-      setError(err.message || 'Failed to analyze file. Please try again.')
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  const handleNewAnalysis = () => {
-    setResults(null)
-    setError(null)
-    setActivePage('upload')
+  const handlePageChange = (page) => {
+    setActivePage(page)
+    navigate(`/${page === 'home' ? '' : page}`)
   }
 
   return (
@@ -73,33 +56,31 @@ function App() {
       <div className="app-content">
         <NavigationBar
           activePage={activePage}
-          setActivePage={setActivePage}
-          hasResults={!!results}
+          setActivePage={handlePageChange}
         />
 
         <main className="main-content">
-          {activePage === 'home' && (
-            <HomePage onStart={() => setActivePage('upload')} />
-          )}
-
-          {activePage === 'upload' && (
-            <UploadPage
-              onFileUpload={handleFileUpload}
-              uploading={uploading}
-              error={error}
+          <Routes>
+            <Route
+              path="/"
+              element={<HomePage />}
             />
-          )}
 
-          {activePage === 'results' && results && (
-            <ResultsPage
-              results={results}
-              onNewAnalysis={handleNewAnalysis}
+            <Route
+              path="/upload"
+              element={<UploadPage />}
             />
-          )}
 
-          {activePage === 'about' && (
-            <AboutPage />
-          )}
+            <Route
+              path="/results"
+              element={<ResultsPage />}
+            />
+
+            <Route
+              path="/about"
+              element={<AboutPage />}
+            />
+          </Routes>
         </main>
 
         <footer className="app-footer">
@@ -116,6 +97,15 @@ function App() {
         </footer>
       </div>
     </div>
+  )
+}
+
+// Main App component with Router wrapper
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   )
 }
 

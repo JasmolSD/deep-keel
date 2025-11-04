@@ -20,6 +20,22 @@
     font-size: clamp(1.5rem, 3vw, 2rem);
 }
 
+.header-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.header-actions button {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.header-actions button svg {
+    flex-shrink: 0;
+}
+
 /* Summary Cards */
 .summary-cards {
     display: grid;
@@ -275,7 +291,12 @@
         align-items: stretch;
     }
 
-    .results-header button {
+    .header-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .header-actions button {
         width: 100%;
     }
 
