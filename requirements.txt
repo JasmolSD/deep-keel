@@ -60,7 +60,7 @@ requests
 # # --- AIS ---
 # pyais
 # folium
-# scikit-learn
+scikit-learn
 
 # # --- GFW ---
 # gfw-api-python-client
