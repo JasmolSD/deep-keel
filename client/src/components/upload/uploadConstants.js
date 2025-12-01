@@ -263,7 +263,10 @@ export const INITIAL_FORM_STATE = {
     // Build Information
     builder: '',
     launch_year: '',
-    commission_year: ''
+    commission_year: '',
+
+    // Number of matches to return
+    top_k: '10',
 };
 
 export const AUTOCOMPLETE_DATA = {

@@ -78,52 +78,59 @@
     letter-spacing: 0.05em;
 }
 
-/* Risk Card */
-.risk-card {
+/* Similarity Card */
+.similarity-card {
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
-.risk-card.risk-low {
+.similarity-card.similarity-high {
     border-color: var(--success);
     background: linear-gradient(135deg, var(--dark-surface), rgba(0, 214, 143, 0.1));
 }
 
-.risk-card.risk-medium {
+.similarity-card.similarity-medium {
     border-color: var(--warning);
     background: linear-gradient(135deg, var(--dark-surface), rgba(255, 165, 2, 0.1));
 }
 
-.risk-card.risk-high {
+.similarity-card.similarity-low {
     border-color: var(--danger);
     background: linear-gradient(135deg, var(--dark-surface), rgba(255, 71, 87, 0.1));
 }
 
-.risk-meter {
+.similarity-meter {
     position: relative;
     width: 100px;
     height: 50px;
     margin: 0 auto var(--spacing-md);
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.risk-meter svg {
+.similarity-meter svg {
     width: 100%;
     height: 100%;
 }
 
-.risk-card.risk-low .risk-meter svg {
+.similarity-card.similarity-high .similarity-meter svg {
     color: var(--success);
 }
 
-.risk-card.risk-medium .risk-meter svg {
+.similarity-card.similarity-medium .similarity-meter svg {
     color: var(--warning);
 }
 
-.risk-card.risk-high .risk-meter svg {
+.similarity-card.similarity-low .similarity-meter svg {
     color: var(--danger);
 }
 
-.risk-value {
+.similarity-value {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -132,23 +139,30 @@
     font-weight: 700;
 }
 
-/* Anomalies Section */
-.anomalies-section {
+/* Vessel Matches Section */
+.matches-section {
     margin-top: var(--spacing-2xl);
 }
 
-.anomalies-section h3 {
+.matches-section h3 {
     font-size: clamp(1.25rem, 2.5vw, 1.5rem);
     margin-bottom: var(--spacing-lg);
 }
 
-.anomalies-grid {
+.section-description {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-bottom: var(--spacing-lg);
+    line-height: 1.5;
+}
+
+.matches-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
     gap: var(--spacing-lg);
 }
 
-.anomaly-card {
+.match-card {
     background: var(--dark-surface);
     border: 1px solid var(--border-color);
     border-radius: 12px;
@@ -156,12 +170,12 @@
     transition: all var(--transition-base);
 }
 
-.anomaly-card:hover {
+.match-card:hover {
     border-color: var(--border-active);
     transform: translateY(-2px);
 }
 
-.anomaly-header {
+.match-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -170,7 +184,7 @@
     gap: var(--spacing-sm);
 }
 
-.anomaly-type {
+.match-type {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
@@ -178,10 +192,24 @@
     text-transform: capitalize;
 }
 
-.anomaly-type svg {
+.match-type svg {
     width: 20px;
     height: 20px;
     color: var(--primary);
+}
+
+.match-rank {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 2px solid #06fbef;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #06fbef;
 }
 
 .confidence-badge {
@@ -194,35 +222,79 @@
     font-weight: 600;
 }
 
-.anomaly-location {
+/* Ship name display */
+.match-ship-name {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-md);
+    line-height: 1.4;
+}
+
+/* Pages display */
+.match-pages {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-xs);
     color: var(--text-secondary);
     font-size: 0.875rem;
     margin-bottom: var(--spacing-md);
+    padding: var(--spacing-xs) 0;
 }
 
-.anomaly-location svg {
+.match-pages svg {
     width: 16px;
     height: 16px;
-    color: var(--text-muted);
+    color: var(--primary);
+    flex-shrink: 0;
 }
 
-.risk-factors {
+.match-factors {
     display: flex;
     flex-wrap: wrap;
     gap: var(--spacing-xs);
 }
 
-.risk-tag {
+.match-tag {
     padding: var(--spacing-xs) var(--spacing-sm);
-    background: rgba(255, 71, 87, 0.1);
-    border: 1px solid rgba(255, 71, 87, 0.3);
+    background: rgba(0, 168, 255, 0.1);
+    border: 1px solid rgba(0, 168, 255, 0.3);
     border-radius: 6px;
-    color: var(--danger);
+    color: var(--primary);
     font-size: 0.75rem;
     text-transform: capitalize;
+}
+
+/* No Matches Section */
+.no-matches-section {
+    margin-top: var(--spacing-2xl);
+    display: flex;
+    justify-content: center;
+}
+
+.no-matches-card {
+    background: var(--dark-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: var(--spacing-2xl);
+    text-align: center;
+    max-width: 500px;
+}
+
+.no-matches-card svg {
+    margin: 0 auto var(--spacing-lg);
+    color: var(--text-muted);
+}
+
+.no-matches-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-md);
+}
+
+.no-matches-card p {
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xl);
+    line-height: 1.6;
 }
 
 /* Metadata Section */
@@ -268,6 +340,14 @@
     word-break: break-all;
 }
 
+.metadata-value.code {
+    font-family: var(--font-mono);
+    background: rgba(0, 168, 255, 0.1);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -304,11 +384,11 @@
         grid-template-columns: 1fr;
     }
 
-    .anomalies-grid {
+    .matches-grid {
         grid-template-columns: 1fr;
     }
 
-    .anomaly-header {
+    .match-header {
         flex-direction: column;
         align-items: flex-start;
     }
@@ -325,8 +405,12 @@
     }
 
     .summary-card,
-    .anomaly-card,
+    .match-card,
     .metadata-card {
         padding: var(--spacing-md);
+    }
+
+    .no-matches-card {
+        padding: var(--spacing-xl);
     }
 }

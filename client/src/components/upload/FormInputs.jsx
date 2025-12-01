@@ -1,6 +1,4 @@
 // components/upload/FormInputs.jsx
-import { useState } from 'react'
-
 export const FormInput = ({ label, required, hint, ...props }) => (
     <div className="form-group">
         <label>{label} {required && <span className="required-star">*</span>}</label>
@@ -23,13 +21,35 @@ export const FormSelect = ({ label, required, options, placeholder = "Select..."
     </div>
 );
 
-export const FormRange = ({ label, required, hint, minProps, maxProps }) => (
+export const FormRange = ({
+    label,
+    required,
+    hint,
+    minValue,
+    maxValue,
+    onMinChange,
+    onMaxChange,
+    minPlaceholder = "Min",
+    maxPlaceholder = "Max"
+}) => (
     <div className="form-group range-group">
         <label>{label} {required && <span className="required-star">*</span>}</label>
         <div className="range-inputs">
-            <input type="number" className="form-input range-input" placeholder="Min" {...minProps} />
+            <input
+                type="number"
+                className="form-input range-input"
+                placeholder={minPlaceholder}
+                value={minValue}
+                onChange={onMinChange}
+            />
             <span className="range-separator">to</span>
-            <input type="number" className="form-input range-input" placeholder="Max" {...maxProps} />
+            <input
+                type="number"
+                className="form-input range-input"
+                placeholder={maxPlaceholder}
+                value={maxValue}
+                onChange={onMaxChange}
+            />
         </div>
         {hint && <span className="form-hint">{hint}</span>}
     </div>

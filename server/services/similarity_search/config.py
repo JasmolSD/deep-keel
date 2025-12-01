@@ -71,7 +71,7 @@ TFIDF_MAX_FEATURES = 100
 TFIDF_STOP_WORDS = 'english'
 
 # Default top-k results
-DEFAULT_TOP_K = 10
+DEFAULT_TOP_K = 5
 
 # Binary column mapping
 BINARY_VALUE_MAP = {'y': 1, 'n': 0}

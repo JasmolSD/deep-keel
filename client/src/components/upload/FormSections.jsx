@@ -121,76 +121,94 @@ export const DimensionsSection = ({ formData, handleInputChange }) => (
             type="number"
             placeholder="Full load displacement"
             value={formData.displacement_full_load_tons}
-            onChange={(e) => handleInputChange('displacement_full_load_tons', e.target.value)}
-            step="0.1"
+            onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                    handleInputChange('displacement_full_load_tons', value);
+                }
+            }}
+            step="10"
         />
 
         <FormRange
             label="Length (metres)"
-            required
-            minProps={{
-                value: formData.length_metres_min,
-                onChange: (e) => handleInputChange('length_metres_min', e.target.value),
-                placeholder: "Min",
-                step: "0.1"
+            minValue={formData.length_metres_min}
+            maxValue={formData.length_metres_max}
+            onMinChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                    handleInputChange('length_metres_min', value);
+                }
             }}
-            maxProps={{
-                value: formData.length_metres_max,
-                onChange: (e) => handleInputChange('length_metres_max', e.target.value),
-                placeholder: "Max",
-                step: "0.1"
+            onMaxChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                    handleInputChange('length_metres_max', value);
+                }
             }}
+            minPlaceholder="Min"
+            maxPlaceholder="Max"
         />
 
         <FormRange
             label="Beam (metres)"
-            required
-            minProps={{
-                value: formData.beam_metres_min,
-                onChange: (e) => handleInputChange('beam_metres_min', e.target.value),
-                placeholder: "Min",
-                step: "0.1"
+            minValue={formData.beam_metres_min}
+            maxValue={formData.beam_metres_max}
+            onMinChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                    handleInputChange('beam_metres_min', value);
+                }
             }}
-            maxProps={{
-                value: formData.beam_metres_max,
-                onChange: (e) => handleInputChange('beam_metres_max', e.target.value),
-                placeholder: "Max",
-                step: "0.1"
+            onMaxChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                    handleInputChange('beam_metres_max', value);
+                }
             }}
+            minPlaceholder="Min"
+            maxPlaceholder="Max"
         />
 
         <FormRange
             label="Draught (metres)"
-            required
-            minProps={{
-                value: formData.draught_metres_min,
-                onChange: (e) => handleInputChange('draught_metres_min', e.target.value),
-                placeholder: "Min",
-                step: "0.1"
+            minValue={formData.draught_metres_min}
+            maxValue={formData.draught_metres_max}
+            onMinChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                    handleInputChange('draught_metres_min', value);
+                }
             }}
-            maxProps={{
-                value: formData.draught_metres_max,
-                onChange: (e) => handleInputChange('draught_metres_max', e.target.value),
-                placeholder: "Max",
-                step: "0.1"
+            onMaxChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                    handleInputChange('draught_metres_max', value);
+                }
             }}
+            minPlaceholder="Min"
+            maxPlaceholder="Max"
         />
 
         <FormRange
             label="Speed (knots)"
             required
-            minProps={{
-                value: formData.speed_knots_min,
-                onChange: (e) => handleInputChange('speed_knots_min', e.target.value),
-                placeholder: "Min",
-                step: "0.1"
+            minValue={formData.speed_knots_min}
+            maxValue={formData.speed_knots_max}
+            onMinChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                    handleInputChange('speed_knots_min', value);
+                }
             }}
-            maxProps={{
-                value: formData.speed_knots_max,
-                onChange: (e) => handleInputChange('speed_knots_max', e.target.value),
-                placeholder: "Max",
-                step: "0.1"
+            onMaxChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                    handleInputChange('speed_knots_max', value);
+                }
             }}
+            minPlaceholder="Min"
+            maxPlaceholder="Max"
         />
 
         <FormInput
@@ -198,7 +216,12 @@ export const DimensionsSection = ({ formData, handleInputChange }) => (
             type="number"
             placeholder="Total crew"
             value={formData.complement_total_personnel}
-            onChange={(e) => handleInputChange('complement_total_personnel', e.target.value)}
+            onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d+$/.test(value)) {
+                    handleInputChange('complement_total_personnel', value);
+                }
+            }}
         />
 
         <FormSelect
@@ -224,7 +247,6 @@ export const HullSection = ({ formData, handleInputChange }) => (
     >
         <FormSelect
             label="Hull Form"
-            required
             options={HULL_FORMS}
             value={formData.hull_form}
             onChange={(e) => handleInputChange('hull_form', e.target.value)}
@@ -232,7 +254,6 @@ export const HullSection = ({ formData, handleInputChange }) => (
 
         <FormSelect
             label="Hull Shape"
-            required
             options={HULL_SHAPES}
             value={formData.hull_shape}
             onChange={(e) => handleInputChange('hull_shape', e.target.value)}
@@ -240,7 +261,6 @@ export const HullSection = ({ formData, handleInputChange }) => (
 
         <FormSelect
             label="Bow Shape"
-            required
             options={BOW_SHAPES}
             value={formData.bow_shape}
             onChange={(e) => handleInputChange('bow_shape', e.target.value)}
@@ -272,9 +292,13 @@ export const SuperstructureSection = ({ formData, handleInputChange }) => (
             type="number"
             placeholder="Number of distinct blocks"
             value={formData.distinct_superstructure_blocks_number}
-            onChange={(e) => handleInputChange('distinct_superstructure_blocks_number', e.target.value)}
-            min="0"
-            max="10"
+            onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d+$/.test(value)) {
+                    const num = value === '' ? '' : Math.min(parseInt(value), 10);
+                    handleInputChange('distinct_superstructure_blocks_number', num === '' ? '' : num.toString());
+                }
+            }}
         />
 
         <FormSelect
@@ -296,9 +320,13 @@ export const SuperstructureSection = ({ formData, handleInputChange }) => (
             type="number"
             placeholder="Number of funnels"
             value={formData.funnels_total}
-            onChange={(e) => handleInputChange('funnels_total', e.target.value)}
-            min="0"
-            max="10"
+            onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d+$/.test(value)) {
+                    const num = value === '' ? '' : Math.min(parseInt(value), 10);
+                    handleInputChange('funnels_total', num === '' ? '' : num.toString());
+                }
+            }}
         />
 
         <FormSelect
@@ -320,9 +348,13 @@ export const SuperstructureSection = ({ formData, handleInputChange }) => (
             type="number"
             placeholder="Total smokestacks"
             value={formData.smokestacks_total}
-            onChange={(e) => handleInputChange('smokestacks_total', e.target.value)}
-            min="0"
-            max="10"
+            onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d+$/.test(value)) {
+                    const num = value === '' ? '' : Math.min(parseInt(value), 10);
+                    handleInputChange('smokestacks_total', num === '' ? '' : num.toString());
+                }
+            }}
         />
 
         <FormSelect
@@ -379,7 +411,12 @@ export const WeaponsSection = ({ formData, handleInputChange }) => (
             type="number"
             placeholder="Gun caliber"
             value={formData.main_gun_caliber_inches}
-            onChange={(e) => handleInputChange('main_gun_caliber_inches', e.target.value)}
+            onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                    handleInputChange('main_gun_caliber_inches', value);
+                }
+            }}
             step="0.01"
         />
 
@@ -388,9 +425,13 @@ export const WeaponsSection = ({ formData, handleInputChange }) => (
             type="number"
             placeholder="Number of turrets"
             value={formData.main_gun_turrets_total}
-            onChange={(e) => handleInputChange('main_gun_turrets_total', e.target.value)}
-            min="0"
-            max="10"
+            onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d+$/.test(value)) {
+                    const num = value === '' ? '' : Math.min(parseInt(value), 10);
+                    handleInputChange('main_gun_turrets_total', num === '' ? '' : num.toString());
+                }
+            }}
         />
 
         <FormSelect
@@ -405,9 +446,13 @@ export const WeaponsSection = ({ formData, handleInputChange }) => (
             type="number"
             placeholder="Total gun mounts"
             value={formData.gunmounts_number}
-            onChange={(e) => handleInputChange('gunmounts_number', e.target.value)}
-            min="0"
-            max="20"
+            onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d+$/.test(value)) {
+                    const num = value === '' ? '' : Math.min(parseInt(value), 20);
+                    handleInputChange('gunmounts_number', num === '' ? '' : num.toString());
+                }
+            }}
         />
 
         <FormSelect
@@ -422,9 +467,13 @@ export const WeaponsSection = ({ formData, handleInputChange }) => (
             type="number"
             placeholder="Visible torpedo tubes"
             value={formData.torpedo_tubes_visible_number}
-            onChange={(e) => handleInputChange('torpedo_tubes_visible_number', e.target.value)}
-            min="0"
-            max="20"
+            onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d+$/.test(value)) {
+                    const num = value === '' ? '' : Math.min(parseInt(value), 20);
+                    handleInputChange('torpedo_tubes_visible_number', num === '' ? '' : num.toString());
+                }
+            }}
         />
 
         <FormInput
@@ -489,9 +538,13 @@ export const AviationSection = ({ formData, handleInputChange }) => (
             type="number"
             placeholder="Number of aircraft"
             value={formData.hangar_capacity}
-            onChange={(e) => handleInputChange('hangar_capacity', e.target.value)}
-            min="0"
-            max="100"
+            onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d+$/.test(value)) {
+                    const num = value === '' ? '' : Math.min(parseInt(value), 100);
+                    handleInputChange('hangar_capacity', num === '' ? '' : num.toString());
+                }
+            }}
         />
 
         <FormRadioGroup
@@ -510,9 +563,13 @@ export const AviationSection = ({ formData, handleInputChange }) => (
             type="number"
             placeholder="Number of helicopters"
             value={formData.helicopter_capacity}
-            onChange={(e) => handleInputChange('helicopter_capacity', e.target.value)}
-            min="0"
-            max="50"
+            onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d+$/.test(value)) {
+                    const num = value === '' ? '' : Math.min(parseInt(value), 50);
+                    handleInputChange('helicopter_capacity', num === '' ? '' : num.toString());
+                }
+            }}
         />
     </FormSection>
 );
@@ -534,9 +591,13 @@ export const BuildInfoSection = ({ formData, handleInputChange }) => (
             type="number"
             placeholder="e.g., 1991"
             value={formData.launch_year}
-            onChange={(e) => handleInputChange('launch_year', e.target.value)}
-            min="1800"
-            max="2050"
+            onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d+$/.test(value)) {
+                    const num = value === '' ? '' : Math.min(parseInt(value), 2050);
+                    handleInputChange('launch_year', num === '' ? '' : num.toString());
+                }
+            }}
         />
 
         <FormInput
@@ -544,9 +605,40 @@ export const BuildInfoSection = ({ formData, handleInputChange }) => (
             type="number"
             placeholder="e.g., 1992"
             value={formData.commission_year}
-            onChange={(e) => handleInputChange('commission_year', e.target.value)}
-            min="1800"
-            max="2050"
+            onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d+$/.test(value)) {
+                    const num = value === '' ? '' : Math.min(parseInt(value), 2050);
+                    handleInputChange('commission_year', num === '' ? '' : num.toString());
+                }
+            }}
+        />
+    </FormSection>
+);
+
+export const MatchSettingsSection = ({
+    formData,
+    handleInputChange
+}) => (
+    <FormSection
+        title="Search Settings"
+        description="Configure search parameters"
+    >
+        <FormInput
+            label="Number of Matches *"
+            placeholder="Enter 1-10"
+            value={formData.top_k}
+            onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d+$/.test(value)) {
+                    const num = value === '' ? '' : Math.min(parseInt(value), 10);
+                    handleInputChange('top_k', num === '' ? '' : num.toString());
+                }
+            }}
+            type="number"
+            min="1"
+            max="10"
+            required
         />
     </FormSection>
 );

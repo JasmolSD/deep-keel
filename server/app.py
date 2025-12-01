@@ -1,16 +1,19 @@
-# app.py
+# app.py - UPDATED VERSION WITH FRONTEND COMPATIBILITY
 from __future__ import annotations
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import os
 from typing import Dict, Optional, List, Any
 from pathlib import Path
 from dotenv import load_dotenv
 import time
+import uuid
+import io
 
 # Import Naval Search system
 from services.similarity_search.naval_search import NavalSimilaritySearch
-from services.similarity_search.config import DEFAULT_WEIGHTS, DEFAULT_TOP_K, SIMILARITY_THRESHOLD
+from services.similarity_search.config import DEFAULT_TOP_K, SIMILARITY_THRESHOLD
+from services.similarity_search.generate_report import generate_classification_report
 
 
 # Conditional import for local development
@@ -36,7 +39,7 @@ CORS(app, origins=["http://localhost:5173", "http://localhost:3000", "https://de
 
 # Configuration
 app.config['UPLOAD_FOLDER'] = 'cache/tmp'
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 50MB max file size
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB max file size
 
 # Path to the naval ships CSV data
 BASE_DIR = Path(__file__).parent
@@ -52,6 +55,10 @@ UPLOADS_DIR = Path(app.config['UPLOAD_FOLDER']).resolve()
 
 # Global search engine instance (initialized on startup)
 search_engine: Optional[NavalSimilaritySearch] = None
+
+# Simple in-memory storage for reports (use Redis/DB for production)
+classification_store = {}
+
 
 def initialize_search_engine():
     """Initialize the naval search engine with the dataset."""
@@ -69,64 +76,44 @@ def initialize_search_engine():
 def clean_query_features(data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Clean and validate query features from JSON input.
-    
-    Args:
-        data: Raw JSON data from request
-        
-    Returns:
-        Cleaned dictionary with valid features
+    Removes empty strings, None values, and converts types appropriately.
     """
     cleaned = {}
     
-    # Process each field
     for key, value in data.items():
-        # Skip empty strings and None values
-        if value == "" or value is None:
+        # Skip empty strings, None, and empty lists
+        if value is None or value == "" or value == []:
             continue
         
-        # Handle boolean strings for binary features
-        if key in ['flight_deck', 'helicopter_platform', 'hangar']:
-            if isinstance(value, str):
-                cleaned[key] = value.lower() in ['true', 'y', 'yes', '1']
-            else:
-                cleaned[key] = bool(value)
-            continue
-        
-        # Handle numeric ranges (min/max pairs)
-        if key.endswith('_min') or key.endswith('_max'):
-            try:
-                cleaned[key] = float(value)
-            except (ValueError, TypeError):
+        # Convert string "True"/"False" to boolean
+        if isinstance(value, str):
+            if value.lower() in ["true", "yes", "1"]:
+                cleaned[key] = True
                 continue
-            continue
-        
-        # Handle numeric fields
-        numeric_fields = [
-            'displacement_full_load_tons', 'complement_total_personnel',
-            'distinct_superstructure_blocks_number', 'funnels_total',
-            'smokestacks_total', 'main_gun_caliber_inches',
-            'main_gun_turrets_total', 'torpedo_tubes_visible_number',
-            'gunmounts_number', 'hangar_capacity', 'helicopter_capacity',
-            'launch_year', 'commission_year', 'CIWS_count'
-        ]
-        
-        if key in numeric_fields:
-            try:
-                cleaned[key] = float(value)
-            except (ValueError, TypeError):
+            elif value.lower() in ["false", "no", "0"]:
+                cleaned[key] = False
                 continue
-            continue
         
-        # Handle string/categorical fields
-        if isinstance(value, str) and value.strip():
-            cleaned[key] = value.strip()
+        # Convert numeric strings to numbers
+        if isinstance(value, str) and value.replace('.', '').replace('-', '').isdigit():
+            try:
+                if '.' in value:
+                    cleaned[key] = float(value)
+                else:
+                    cleaned[key] = int(value)
+                continue
+            except ValueError:
+                pass
+        
+        # Keep valid values
+        cleaned[key] = value
     
     return cleaned
 
 
-def format_search_results(results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def format_search_results(results: List[Dict]) -> List[Dict]:
     """
-    Format search results for frontend consumption.
+    Format search results with cleaner structure.
     
     Args:
         results: Raw results from search engine
@@ -154,7 +141,6 @@ def format_search_results(results: List[Dict[str, Any]]) -> List[Dict[str, Any]]
     
     return formatted
 
-
 @app.route("/")
 def index():
     """Root endpoint with API information."""
@@ -164,9 +150,12 @@ def index():
         "status": "operational" if search_engine else "initializing",
         "endpoints": {
             "health": "/api/health",
+            "classify": "/api/classify (POST)",
             "search": "/api/search (POST)",
             "statistics": "/api/statistics",
-            "categories": "/api/categories"
+            "stats": "/api/stats (alias)",
+            "categories": "/api/categories",
+            "ship_classes": "/api/ship-classes"
         }
     })
 
@@ -204,6 +193,12 @@ def get_statistics():
         }), 500
 
 
+@app.route("/api/stats")
+def get_stats_alias():
+    """Alias for /api/statistics to match frontend expectations."""
+    return get_statistics()
+
+
 @app.route("/api/categories")
 def get_categories():
     """Get available categories for dropdowns."""
@@ -226,10 +221,38 @@ def get_categories():
         }), 500
 
 
-@app.route("/api/search", methods=["POST"])
-def search_similar_ships():
+@app.route("/api/ship-classes")
+def get_ship_classes():
+    """Get list of all ship classes for autocomplete - frontend compatible endpoint."""
+    if not search_engine:
+        return jsonify({
+            'error': 'Search engine not initialized'
+        }), 503
+    
+    try:
+        # Get unique ship classes from dataset
+        df = search_engine.df
+        assert df is not None
+        ship_classes = sorted(df['ship_class'].dropna().unique().tolist())
+        
+        return jsonify({
+            'success': True,
+            'ship_classes': ship_classes,
+            'count': len(ship_classes)
+        })
+    except Exception as e:
+        app.logger.error(f"Ship classes error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route("/api/classify", methods=["POST"])
+def classify_ship():
     """
-    Main search endpoint - accepts JSON ship specifications and returns similar ships.
+    Main classification endpoint - matches frontend expectations.
+    This endpoint accepts JSON ship characteristics and returns classification results.
     
     Expected JSON format:
     {
@@ -245,9 +268,11 @@ def search_similar_ships():
     Returns:
     {
         "success": true,
-        "query_summary": {...},
-        "results": [...],
-        "count": 10,
+        "total_matches": 10,
+        "matches": [...],
+        "processing_time": 1.23,
+        "report_text": "...",
+        "classification_id": "uuid",
         "timestamp": 1234567890
     }
     """
@@ -258,6 +283,8 @@ def search_similar_ships():
         }), 503
     
     try:
+        start_time = time.time()
+        
         # Get JSON data from request
         if not request.is_json:
             return jsonify({
@@ -269,6 +296,10 @@ def search_similar_ships():
         
         # Extract parameters
         top_k = data.pop('top_k', DEFAULT_TOP_K)
+        if isinstance(top_k, str):
+            top_k = int(top_k)
+        elif top_k is None:
+            top_k = DEFAULT_TOP_K
         weights = data.pop('weights', None)
         
         # Clean and validate query features
@@ -290,27 +321,53 @@ def search_similar_ships():
         # Format results
         formatted_results = format_search_results(results)
         
-        # Create response
+        # Generate report text
+        report_text = generate_classification_report(query_features, formatted_results, SIMILARITY_THRESHOLD)
+        
+        # Generate unique classification ID
+        classification_id = str(uuid.uuid4())
+        
+        # Store classification for later retrieval
+        classification_data = {
+            'id': classification_id,
+            'query_features': query_features,
+            'results': formatted_results,
+            'report_text': report_text,
+            'timestamp': time.time()
+        }
+        classification_store[classification_id] = classification_data
+        
+        # Calculate processing time
+        processing_time = round(time.time() - start_time, 2)
+        
+        # Create response matching frontend expectations
         response = {
             'success': True,
-            'query_summary': {
-                'features_used': list(query_features.keys()),
-                'feature_count': len(query_features),
-                'similarity_threshold': SIMILARITY_THRESHOLD
-            },
-            'results': formatted_results,
-            'count': len(formatted_results),
+            'total_matches': len(formatted_results),
+            'matches': formatted_results,
+            'processing_time': processing_time,
+            'report_text': report_text,
+            'classification_id': classification_id,
             'timestamp': time.time()
         }
         
         return jsonify(response), 200
         
     except Exception as e:
-        app.logger.error(f"Search error: {str(e)}", exc_info=True)
+        app.logger.error(f"Classification error: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'error': f'Search failed: {str(e)}'
+            'error': f'Classification failed: {str(e)}'
         }), 500
+
+
+@app.route("/api/search", methods=["POST"])
+def search_similar_ships():
+    """
+    Alternative search endpoint - same functionality as /api/classify.
+    Kept for backwards compatibility.
+    """
+    return classify_ship()
 
 
 @app.route("/api/search/filter", methods=["POST"])
@@ -375,6 +432,74 @@ def filter_ships():
         }), 500
 
 
+@app.route("/api/classification/<classification_id>")
+def get_classification(classification_id: str):
+    """
+    Get classification results by ID - frontend compatible endpoint.
+    
+    Returns stored classification data including results and report.
+    """
+    try:
+        if classification_id not in classification_store:
+            return jsonify({
+                'success': False,
+                'error': 'Classification not found'
+            }), 404
+        
+        classification_data = classification_store[classification_id]
+        
+        return jsonify({
+            'success': True,
+            'classification': classification_data
+        }), 200
+        
+    except Exception as e:
+        app.logger.error(f"Get classification error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route("/api/report/<report_id>")
+def download_report(report_id: str):
+    """
+    Download classification report as text file - frontend compatible endpoint.
+    
+    The report_id should be the same as classification_id.
+    """
+    try:
+        if report_id not in classification_store:
+            return jsonify({
+                'error': 'Report not found'
+            }), 404
+        
+        classification_data = classification_store[report_id]
+        report_text = classification_data.get('report_text', '')
+        
+        if not report_text:
+            return jsonify({
+                'error': 'Report text not available'
+            }), 404
+        
+        # Create file-like object
+        report_bytes = io.BytesIO(report_text.encode('utf-8'))
+        
+        # Send file
+        return send_file(
+            report_bytes,
+            mimetype='text/plain',
+            as_attachment=True,
+            download_name=f'classification_report_{report_id[:8]}.txt'
+        )
+        
+    except Exception as e:
+        app.logger.error(f"Download report error: {str(e)}")
+        return jsonify({
+            'error': str(e)
+        }), 500
+
+
 @app.route("/api/ship/<ship_id>")
 def get_ship_details(ship_id: str):
     """Get details for a specific ship by ID."""
@@ -436,5 +561,11 @@ if __name__ == "__main__":
     print(f"🚀 Starting Naval Similarity Search API on port {port}")
     print(f"📊 Dataset: {DATA_PATH}")
     print(f"🔧 Debug mode: {debug}")
+    print(f"\n✅ Added endpoints for frontend compatibility:")
+    print(f"   - POST /api/classify")
+    print(f"   - GET  /api/stats (alias)")
+    print(f"   - GET  /api/ship-classes")
+    print(f"   - GET  /api/report/<id>")
+    print(f"   - GET  /api/classification/<id>")
     
     app.run(host="0.0.0.0", port=port, debug=debug)
