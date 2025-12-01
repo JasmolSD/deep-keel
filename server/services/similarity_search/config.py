@@ -57,13 +57,13 @@ BINARY_FEATURES = ['flight_deck', 'helicopter_platform', 'hangar']
 
 # Default similarity weights
 DEFAULT_WEIGHTS: Dict[str, float] = {
-    'numerical': 0.4,
-    'categorical': 0.3,
-    'text': 0.2,
-    'binary': 0.1
+    'numerical': 0.2,
+    'categorical': 0,
+    'text': 0.4,
+    'binary': 0.4
 }
 
-# Similarity threshold (70%)
+# Similarity threshold
 SIMILARITY_THRESHOLD = 0.3
 
 # TF-IDF parameters
