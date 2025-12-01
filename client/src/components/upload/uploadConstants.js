@@ -266,16 +266,6 @@ export const INITIAL_FORM_STATE = {
     commission_year: ''
 };
 
-export const SECTIONS = [
-    { id: 'identification', label: 'Identification', icon: '🆔' },
-    { id: 'dimensions', label: 'Dimensions', icon: '📏' },
-    { id: 'hull', label: 'Hull', icon: '🚢' },
-    { id: 'superstructure', label: 'Superstructure', icon: '🏗️' },
-    { id: 'weapons', label: 'Weapons', icon: '⚔️' },
-    { id: 'aviation', label: 'Aviation', icon: '🚁' },
-    { id: 'build', label: 'Build Info', icon: '🏭' }
-];
-
 export const AUTOCOMPLETE_DATA = {
     countries: [
         'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Antigua and Barbuda',

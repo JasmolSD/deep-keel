@@ -42,15 +42,8 @@ const UploadPage = () => {
 
         // Validate required fields
         const requiredFields = {
-            'Length Min': formData.length_metres_min,
-            'Length Max': formData.length_metres_max,
-            'Beam Min': formData.beam_metres_min,
-            'Beam Max': formData.beam_metres_max,
-            'Draught Min': formData.draught_metres_min,
-            'Draught Max': formData.draught_metres_max,
-            'Hull Form': formData.hull_form,
-            'Hull Shape': formData.hull_shape,
-            'Bow Shape': formData.bow_shape
+            'Speed Min': formData.speed_knots_min,
+            'Speed Max': formData.speed_knots_max,
         };
 
         const missingFields = Object.entries(requiredFields)
