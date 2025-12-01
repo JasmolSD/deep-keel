@@ -266,7 +266,7 @@ export const INITIAL_FORM_STATE = {
     commission_year: '',
 
     // Number of matches to return
-    top_k: '10',
+    top_k: '5',
 };
 
 export const AUTOCOMPLETE_DATA = {
