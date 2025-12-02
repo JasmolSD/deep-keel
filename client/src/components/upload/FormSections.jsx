@@ -625,7 +625,7 @@ export const MatchSettingsSection = ({
         description="Configure search parameters"
     >
         <FormInput
-            label="Number of Matches *"
+            label="Number of Matches"
             placeholder="Enter 1-10"
             value={formData.top_k}
             onChange={(e) => {

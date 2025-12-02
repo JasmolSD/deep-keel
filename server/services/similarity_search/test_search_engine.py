@@ -4,7 +4,7 @@ CORRECTED test script for your NavalSimilaritySearch class.
 Run this script to verify your search engine can find the KALMYKIYA ship.
 """
 
-from naval_search import NavalSimilaritySearch
+from .naval_search import NavalSimilaritySearch
 
 # Path to your data
 DATA_PATH = "server/cache/static/naval_ships_data_expanded_alternate.csv"
