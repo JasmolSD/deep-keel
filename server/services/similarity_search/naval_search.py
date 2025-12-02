@@ -1,11 +1,12 @@
 """
 Main naval similarity search service.
 Orchestrates preprocessing, indexing, and searching.
+
+UPDATED: Aggregation now happens during search phase, before limiting to top_k
 """
 
 import pandas as pd
 from typing import List, Dict, Any, Optional, Union
-
 from .config import DEFAULT_WEIGHTS, DEFAULT_TOP_K
 from .data_preprocessor import DataPreprocessor
 from .similarity_engine import SimilarityEngine
@@ -59,16 +60,20 @@ class NavalSimilaritySearch:
         query_ship_id: Optional[str] = None,
         query_features: Optional[dict] = None,
         top_k: int = DEFAULT_TOP_K,
-        weights: Optional[Dict[str, float]] = None
+        weights: Optional[Dict[str, float]] = None,
+        aggregate: bool = True
     ) -> List[Dict[str, Any]]:
         """
         Find similar ships based on query.
+        
+        Aggregation by index happens BEFORE limiting to top_k.
         
         Args:
             query_ship_id: Unique ID of existing ship to compare against
             query_features: Custom feature dictionary for comparison
             top_k: Number of top results to return
             weights: Weights for different feature types
+            aggregate: Whether to aggregate results by index (default True)
             
         Returns:
             List of similar ship dictionaries with metadata
@@ -80,9 +85,9 @@ class NavalSimilaritySearch:
             weights = DEFAULT_WEIGHTS.copy()
         
         if query_ship_id is not None:
-            return self._find_similar_to_existing(query_ship_id, top_k, weights)
+            return self._find_similar_to_existing(query_ship_id, top_k, weights, aggregate)
         elif query_features is not None:
-            return self._find_similar_to_custom(query_features, top_k, weights)
+            return self._find_similar_to_custom(query_features, top_k, weights, aggregate)
         else:
             raise ValueError("Must provide either query_ship_id or query_features")
     
@@ -90,7 +95,8 @@ class NavalSimilaritySearch:
         self,
         query_ship_id: str,
         top_k: int,
-        weights: Dict[str, float]
+        weights: Dict[str, float],
+        aggregate: bool = True
     ) -> List[Dict[str, Any]]:
         """
         Find ships similar to an existing ship.
@@ -99,6 +105,7 @@ class NavalSimilaritySearch:
             query_ship_id: Unique ID of the query ship
             top_k: Number of results to return
             weights: Feature weights
+            aggregate: Whether to aggregate by index
             
         Returns:
             List of similar ship results
@@ -119,18 +126,20 @@ class NavalSimilaritySearch:
             weights=weights
         )   
         
-        # Format and return results
+        # Format and return results (aggregation happens here before top_k limit)
         return self.result_formatter.group_and_format_results(      # type: ignore
             similarity_scores,
             top_k=top_k,
-            exclude_idx=query_idx
+            exclude_idx=query_idx,
+            aggregate=aggregate
         )
     
     def _find_similar_to_custom(
         self,
         query_features: dict,
         top_k: int,
-        weights: Dict[str, float]
+        weights: Dict[str, float],
+        aggregate: bool = True
     ) -> List[Dict[str, Any]]:
         """
         Find ships similar to custom query features.
@@ -139,6 +148,7 @@ class NavalSimilaritySearch:
             query_features: Dictionary of features to search for
             top_k: Number of results to return
             weights: Feature weights
+            aggregate: Whether to aggregate by index
             
         Returns:
             List of similar ship results
@@ -149,49 +159,204 @@ class NavalSimilaritySearch:
             weights=weights
         )
         
-        # Format and return results
+        # Format and return results (aggregation happens here before top_k limit)
         return self.result_formatter.group_and_format_results(      # type: ignore
             similarity_scores,
-            top_k=top_k
+            top_k=top_k,
+            aggregate=aggregate
         )
     
     def search_by_filters(
-        self,
-        filters: Dict[str, Union[Any, tuple]],
-        top_k: int = 20
-    ) -> List[Dict[str, Any]]:
+        self, 
+        filters: Dict[str, Any], 
+        top_k: int = 10,
+        aggregate: bool = True,
+        fill_with_similarity: bool = True,
+        similarity_features: Optional[Dict[str, Any]] = None,
+        weights: Optional[Dict[str, float]] = None
+    ) -> List[Dict]:
         """
-        Search ships using direct filters.
+        Search ships by filters (exact matches and ranges).
         
-        Supports exact matches and range queries.
+        If filter results are fewer than top_k and fill_with_similarity=True,
+        additional results will be fetched using similarity search.
+        
+        Aggregation by index happens BEFORE limiting to top_k.
         
         Args:
-            filters: Dictionary of column:value filters
-                    - Single values for exact match
-                    - Tuples (min, max) for range queries
-            top_k: Maximum number of results
+            filters: Dictionary of filters where:
+                - Regular key: exact match (e.g., {'ship_type': 'Destroyer'})
+                - Key with __gte: greater than or equal (e.g., {'length_metres__gte': 100})
+                - Key with __lte: less than or equal (e.g., {'length_metres__lte': 200})
+            top_k: Maximum number of results to return
+            aggregate: Whether to aggregate results by index (default True)
+            fill_with_similarity: Whether to fill remaining slots with similarity results (default True)
+            similarity_features: Features to use for similarity search when filling
+            weights: Weights for similarity search
+        
+        Returns:
+            List of matching ships (aggregated by index if aggregate=True)
+        """
+        df = self.df.copy()     # type: ignore
+        
+        for key, value in filters.items():
+            if '__gte' in key:
+                # Greater than or equal (for _min queries)
+                field = key.replace('__gte', '')
+                if field in df.columns:
+                    df = df[df[field] >= value]
+                    print(f"Filtered {field} >= {value}, remaining: {len(df)}")
+            
+            elif '__lte' in key:
+                # Less than or equal (for _max queries)
+                field = key.replace('__lte', '')
+                if field in df.columns:
+                    df = df[df[field] <= value]
+                    print(f"Filtered {field} <= {value}, remaining: {len(df)}")
+            
+            elif '__gt' in key:
+                # Greater than
+                field = key.replace('__gt', '')
+                if field in df.columns:
+                    df = df[df[field] > value]
+            
+            elif '__lt' in key:
+                # Less than
+                field = key.replace('__lt', '')
+                if field in df.columns:
+                    df = df[df[field] < value]
+            
+            else:
+                # Exact match
+                if key in df.columns:
+                    # Handle None/NaN values
+                    if pd.isna(value):
+                        df = df[df[key].isna()]
+                    else:
+                        df = df[df[key] == value]
+                    print(f"Filtered {key} == {value}, remaining: {len(df)}")
+        
+        # Use result_formatter to handle aggregation properly
+        # Aggregation happens BEFORE limiting to top_k
+        filter_results = self.result_formatter.format_filter_results(  # type: ignore
+            df,
+            top_k=top_k,
+            aggregate=aggregate
+        )
+        
+        print(f"Filter results (aggregate={aggregate}): {len(filter_results)}")
+        
+        # If we have enough results or filling is disabled, return filter results
+        if len(filter_results) >= top_k or not fill_with_similarity:
+            return filter_results
+        
+        # Need to fill remaining slots with similarity search
+        remaining_slots = top_k - len(filter_results)
+        print(f"Filling {remaining_slots} remaining slots with similarity search...")
+        
+        # Get index values from filter results to exclude
+        exclude_indices = set()
+        for result in filter_results:
+            index_val = result.get('index')
+            if index_val is not None:
+                exclude_indices.add(index_val)
+        
+        print(f"Excluding {len(exclude_indices)} indices from similarity search: {exclude_indices}")
+        
+        # Build similarity features from filters if not provided
+        if similarity_features is None:
+            similarity_features = self._build_similarity_features_from_filters(filters)
+        
+        # Only run similarity search if we have features to search with
+        if similarity_features:
+            # Get more similarity results than needed to account for exclusions
+            similarity_results = self._find_similar_to_custom(
+                query_features=similarity_features,
+                top_k=remaining_slots + len(exclude_indices) + 10,  # Get extra to account for exclusions
+                weights=weights if weights else DEFAULT_WEIGHTS.copy(),
+                aggregate=aggregate
+            )
+            
+            # Filter out results that share index with filter results
+            additional_results = []
+            for result in similarity_results:
+                result_index = result.get('index')
+                if result_index not in exclude_indices:
+                    # Mark this as a similarity-based result
+                    result['match_type'] = 'similarity'
+                    additional_results.append(result)
+                    exclude_indices.add(result_index)  # Avoid duplicates in similarity results too
+                    
+                    if len(additional_results) >= remaining_slots:
+                        break
+            
+            print(f"Added {len(additional_results)} similarity results")
+            
+            # Mark filter results
+            for result in filter_results:
+                result['match_type'] = 'filter'
+            
+            # Combine results
+            combined_results = filter_results + additional_results
+            
+            # Re-assign ranks
+            for i, result in enumerate(combined_results, 1):
+                result['rank'] = i
+            
+            return combined_results
+        
+        return filter_results
+    
+    def _build_similarity_features_from_filters(
+        self,
+        filters: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Convert filter parameters to similarity search features.
+        
+        Args:
+            filters: Filter dictionary with __gte/__lte suffixes
             
         Returns:
-            List of matching ships
-            
-        Example:
-            >>> search.search_by_filters({
-            ...     'country': 'USA',
-            ...     'length_metres': (100, 200),
-            ...     'ship_type': 'Destroyer'
-            ... })
+            Features dictionary suitable for similarity search
         """
-        assert self.df is not None
-        filtered_df = self.df.copy()
+        features = {}
         
-        for column, value in filters.items():
-            if column not in filtered_df.columns:
-                print(f"Warning: Column '{column}' not found, skipping")
+        # Track min/max pairs
+        range_fields: Dict[str, Dict[str, Any]] = {}
+        
+        for key, value in filters.items():
+            if '__gte' in key:
+                field = key.replace('__gte', '')
+                if field not in range_fields:
+                    range_fields[field] = {}
+                range_fields[field]['min'] = value
+            elif '__lte' in key:
+                field = key.replace('__lte', '')
+                if field not in range_fields:
+                    range_fields[field] = {}
+                range_fields[field]['max'] = value
+            elif '__gt' in key or '__lt' in key:
+                # Skip strict inequalities for similarity
                 continue
-            
-            filtered_df = self._apply_filter(filtered_df, column, value)
+            else:
+                # Exact match - use directly
+                features[key] = value
         
-        return self.result_formatter.format_filter_results(filtered_df, top_k)  # type: ignore
+        # Convert range fields to midpoint values for similarity search
+        for field, bounds in range_fields.items():
+            min_val = bounds.get('min')
+            max_val = bounds.get('max')
+            
+            if min_val is not None and max_val is not None:
+                # Use midpoint
+                features[field] = (min_val + max_val) / 2
+            elif min_val is not None:
+                features[field] = min_val
+            elif max_val is not None:
+                features[field] = max_val
+        
+        return features
     
     @staticmethod
     def _apply_filter(

@@ -1,11 +1,15 @@
 """
 Query builder for preparing custom search queries.
 Handles conversion of user input to feature vectors.
+
+FIXES APPLIED:
+1. Return ranges instead of midpoint values for numerical features
+2. Only include features that are actually specified in the query
+3. Proper handling of min/max format
 """
 
 import pandas as pd
-import numpy as np
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any, Optional
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -38,9 +42,103 @@ class QueryBuilder:
         self.label_encoders = label_encoders
         self.tfidf = tfidf
     
+    def prepare_numerical_ranges(
+        self, 
+        query_features: dict
+    ) -> Dict[str, Dict[str, Optional[float]]]:
+        """
+        Extract numerical feature ranges from query.
+        
+        IMPORTANT: Only returns features that were actually specified.
+        Does NOT default to zero for missing features.
+        
+        Args:
+            query_features: Dictionary of query features
+            
+        Returns:
+            Dictionary mapping column names to {min, max} dicts
+        """
+        available_numeric = [col for col in NUMERIC_FEATURES if col in self.df.columns]
+        ranges = {}
+        
+        for col in available_numeric:
+            range_vals = self._extract_range(query_features, col)
+            if range_vals is not None:
+                ranges[col] = range_vals
+        
+        return ranges
+    
+    def _extract_range(
+        self, 
+        query_features: dict, 
+        col: str
+    ) -> Optional[Dict[str, Optional[float]]]:
+        """
+        Extract min/max range for a numerical column.
+        
+        Supports formats:
+        - {col_min: 70, col_max: 80}
+        - {col: [70, 80]}
+        - {col: 75}  (single value)
+        
+        Returns:
+            Dict with 'min' and 'max' keys, or None if not specified
+        """
+        min_key = f"{col}_min"
+        max_key = f"{col}_max"
+        
+        # Check for min/max format
+        if min_key in query_features or max_key in query_features:
+            min_val = query_features.get(min_key)
+            max_val = query_features.get(max_key)
+            
+            # Convert empty strings to None
+            if min_val == '' or min_val is None:
+                min_val = None
+            else:
+                min_val = float(min_val)
+                
+            if max_val == '' or max_val is None:
+                max_val = None
+            else:
+                max_val = float(max_val)
+            
+            # Only return if at least one bound is specified
+            if min_val is not None or max_val is not None:
+                return {'min': min_val, 'max': max_val}
+            return None
+        
+        # Check for direct value
+        if col in query_features:
+            value = query_features[col]
+            
+            if value == '' or value is None:
+                return None
+            
+            # Handle list/tuple ranges
+            if isinstance(value, (list, tuple)) and len(value) == 2:
+                return {
+                    'min': float(value[0]) if value[0] not in ('', None) else None,
+                    'max': float(value[1]) if value[1] not in ('', None) else None
+                }
+            
+            # Single value - use as both min and max for exact match
+            try:
+                val = float(value)  # type: ignore
+                # Allow 5% tolerance for single value matches
+                tolerance = abs(val) * 0.05 if val != 0 else 1
+                return {'min': val - tolerance, 'max': val + tolerance}
+            except (ValueError, TypeError):
+                return None
+        
+        return None
+    
     def prepare_numerical_query(self, query_features: dict) -> List[float]:
         """
         Prepare numerical features from query, handling ranges.
+        
+        DEPRECATED: Use prepare_numerical_ranges instead for custom queries.
+        Kept for backward compatibility with existing ship index queries.
         
         Args:
             query_features: Dictionary of query features
@@ -61,10 +159,6 @@ class QueryBuilder:
         """
         Extract numeric value from query, handling different formats.
         
-        Supports:
-        - Single values: {col: 100}
-        - Ranges: {col: [50, 100]} or {col_min: 50, col_max: 100}
-        
         Args:
             query_features: Query feature dictionary
             col: Column name
@@ -72,7 +166,6 @@ class QueryBuilder:
         Returns:
             Numeric value (midpoint for ranges)
         """
-        # Check for min/max range format
         min_key = f"{col}_min"
         max_key = f"{col}_max"
         
@@ -80,22 +173,32 @@ class QueryBuilder:
             min_val = query_features.get(min_key, 0)
             max_val = query_features.get(max_key, 1000)
             
-            if min_val == 0 and max_key in query_features:
-                return max_val / 2
+            # Handle empty strings
+            if min_val == '':
+                min_val = 0
+            if max_val == '':
+                max_val = 1000
+                
+            min_val = float(min_val)
+            max_val = float(max_val)
+            
             return (min_val + max_val) / 2
         
-        # Check for direct value
         value = query_features.get(col, 0)
         
-        # Handle list/tuple ranges
-        if isinstance(value, (list, tuple)) and len(value) == 2:
-            return (value[0] + value[1]) / 2
+        if value == '' or value is None:
+            return 0.0
         
-        return float(value)
+        if isinstance(value, (list, tuple)) and len(value) == 2:
+            return (float(value[0]) + float(value[1])) / 2
+        
+        return float(value)     # type: ignore
     
     def prepare_categorical_query(self, query_features: dict) -> dict:
         """
         Prepare categorical features from query.
+        
+        Only includes features that are actually specified.
         
         Args:
             query_features: Dictionary of query features
@@ -112,6 +215,10 @@ class QueryBuilder:
             
             value = query_features[col]
             
+            # Skip empty values
+            if value == '' or value is None:
+                continue
+            
             # Skip range queries for categorical
             if isinstance(value, (list, tuple)):
                 continue
@@ -119,15 +226,17 @@ class QueryBuilder:
             # Encode if the value exists in the original data
             if col in self.label_encoders and value in self.df[col].values:
                 try:
-                    query_categorical[col] = self.label_encoders[col].transform([value])[0]
+                    query_categorical[col] = self.label_encoders[col].transform([value])[0]     # type: ignore
                 except Exception:
-                    pass  # Skip if encoding fails
+                    pass
         
         return query_categorical
     
     def prepare_text_query(self, query_features: dict) -> str:
         """
         Prepare text features from query.
+        
+        Only includes features that are actually specified.
         
         Args:
             query_features: Dictionary of query features
@@ -143,6 +252,10 @@ class QueryBuilder:
             
             value = query_features[col]
             
+            # Skip empty values
+            if value == '' or value is None:
+                continue
+            
             # Skip range queries for text
             if isinstance(value, (list, tuple)):
                 continue
@@ -154,6 +267,8 @@ class QueryBuilder:
     def prepare_binary_query(self, query_features: dict) -> dict:
         """
         Prepare binary features from query.
+        
+        Only includes features that are actually specified.
         
         Args:
             query_features: Dictionary of query features
@@ -169,6 +284,11 @@ class QueryBuilder:
                 continue
             
             value = query_features[col]
+            
+            # Skip empty values
+            if value == '' or value is None:
+                continue
+            
             query_binary[col] = self._convert_to_binary(value)
         
         return query_binary
@@ -184,7 +304,10 @@ class QueryBuilder:
         Returns:
             0 or 1
         """
-        if isinstance(value, (bool, int)):
+        if isinstance(value, bool):
+            return 1 if value else 0
+        
+        if isinstance(value, int):
             return 1 if value else 0
         
         if isinstance(value, str):

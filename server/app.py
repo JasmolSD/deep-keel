@@ -7,13 +7,13 @@ from typing import Dict, Optional, List, Any
 from pathlib import Path
 from dotenv import load_dotenv
 import time
-import uuid
-import io
+import uuid, io
 
 # Import Naval Search system
 from services.similarity_search.naval_search import NavalSimilaritySearch
 from services.similarity_search.config import DEFAULT_TOP_K, SIMILARITY_THRESHOLD
 from services.similarity_search.generate_report import generate_classification_report
+from services.endpoint_support import format_search_results
 
 
 # Conditional import for local development
@@ -110,36 +110,6 @@ def clean_query_features(data: Dict[str, Any]) -> Dict[str, Any]:
     
     return cleaned
 
-
-def format_search_results(results: List[Dict]) -> List[Dict]:
-    """
-    Format search results with cleaner structure.
-    
-    Args:
-        results: Raw results from search engine
-        
-    Returns:
-        Formatted results with cleaner structure
-    """
-    formatted = []
-    
-    for result in results:
-        formatted_result = {
-            'rank': result.get('rank', 0),
-            'similarity_score': round(result.get('similarity_score', 0) * 100, 2),
-            'ship_info': {
-                'name': result.get('combined_name', 'Unknown'),
-                'ship_names': result.get('ship_names_list', []),
-                'hull_numbers': result.get('hull_numbers_list', []),
-                'country': result.get('country', 'Unknown'),
-                'ship_class': result.get('ship_class', 'Unknown'),
-                'ship_type': result.get('ship_type', 'Unknown'),
-                'pages': result.get('pages', 'N/A')
-            }
-        }
-        formatted.append(formatted_result)
-    
-    return formatted
 
 @app.route("/")
 def index():
@@ -251,30 +221,13 @@ def get_ship_classes():
 @app.route("/api/classify", methods=["POST"])
 def classify_ship():
     """
-    Main classification endpoint - matches frontend expectations.
-    This endpoint accepts JSON ship characteristics and returns classification results.
+    Main classification endpoint - UPDATED VERSION.
     
-    Expected JSON format:
-    {
-        "ship_name": "optional",
-        "country": "USA",
-        "ship_type": "Destroyer",
-        "length_metres_min": 100,
-        "length_metres_max": 200,
-        "hull_form": "conventional",
-        ...
-    }
-    
-    Returns:
-    {
-        "success": true,
-        "total_matches": 10,
-        "matches": [...],
-        "processing_time": 1.23,
-        "report_text": "...",
-        "classification_id": "uuid",
-        "timestamp": 1234567890
-    }
+    Now includes:
+    - Range query handling
+    - Field name differences
+    - Page number extraction
+    - Ship aggregation by index
     """
     if not search_engine:
         return jsonify({
@@ -285,7 +238,6 @@ def classify_ship():
     try:
         start_time = time.time()
         
-        # Get JSON data from request
         if not request.is_json:
             return jsonify({
                 'success': False,
@@ -294,43 +246,114 @@ def classify_ship():
         
         data = request.get_json()
         
-        # Extract parameters
-        top_k = data.pop('top_k', DEFAULT_TOP_K)
-        if isinstance(top_k, str):
-            top_k = int(top_k)
-        elif top_k is None:
-            top_k = DEFAULT_TOP_K
-        weights = data.pop('weights', None)
+        # Clean the query features (converts types, removes empty values)
+        cleaned_features = clean_query_features(data)
         
-        # Clean and validate query features
-        query_features = clean_query_features(data)
+        # Get top_k, weights, and aggregation preference
+        top_k = cleaned_features.pop('top_k', DEFAULT_TOP_K)
+        weights = cleaned_features.pop('weights', None)
+        aggregate_by_index = cleaned_features.pop('aggregate_by_index', True)  # Default to True
         
-        if not query_features:
+        # CRITICAL: Separate range queries from exact matches
+        filters = {}
+        similarity_features = {}
+        has_range_queries = False
+        
+        # Define which fields use range queries
+        range_field_bases = [
+            'length_metres', 
+            'beam_metres', 
+            'draught_metres', 
+            'speed_knots',
+            'displacement_full_load_tons',
+            'complement_total_personnel'
+        ]
+        
+        # Process each cleaned feature
+        for key, value in cleaned_features.items():
+            # Check if this is a range field (ends with _min or _max)
+            if key.endswith('_min') or key.endswith('_max'):
+                has_range_queries = True
+                base_field = key.rsplit('_', 1)[0]
+                suffix = key.rsplit('_', 1)[1]
+                
+                # Convert to filter format
+                if suffix == 'min':
+                    filters[f"{base_field}__gte"] = value
+                elif suffix == 'max':
+                    filters[f"{base_field}__lte"] = value
+            
+            # These fields should be exact match filters when we have range queries
+            elif key in ['ship_type', 'ship_role', 'country', 'ship_class', 
+                         'hull_form', 'approximate_size_category', 'base_port',
+                         'superstructure_layout', 'funnel_arrangement', 
+                         'mast_configuration', 'radar_configuration',
+                         'flight_deck', 'hangar', 'helicopter_platform']:
+                filters[key] = value
+            
+            # All other fields are for similarity search
+            else:
+                similarity_features[key] = value
+        
+        # Log what we're searching for
+        app.logger.info(f"Has range queries: {has_range_queries}")
+        app.logger.info(f"Filters: {filters}")
+        app.logger.info(f"Similarity features: {similarity_features}")
+        app.logger.info(f"Aggregate by index: {aggregate_by_index}")
+        
+        # Perform the search (aggregation happens inside search methods BEFORE top_k limit)
+        if has_range_queries or (filters and not similarity_features):
+            # Use filter-based search (will fill with similarity if needed)
+            app.logger.info("Using filter-based search")
+            results = search_engine.search_by_filters(
+                filters=filters,
+                top_k=top_k,
+                aggregate=aggregate_by_index,  # Aggregation happens during search
+                fill_with_similarity=True,  # Fill remaining slots with similarity matches
+                similarity_features=similarity_features if similarity_features else None,
+                weights=weights
+            )
+            
+        elif similarity_features:
+            # Use similarity search
+            app.logger.info("Using similarity-based search")
+            results = search_engine.get_similar_ships(
+                query_features=similarity_features,
+                top_k=top_k,
+                weights=weights,
+                aggregate=aggregate_by_index  # Aggregation happens during search
+            )
+            
+        else:
             return jsonify({
                 'success': False,
-                'error': 'No valid query features provided'
+                'error': 'No valid search criteria provided'
             }), 400
         
-        # Perform similarity search
-        results = search_engine.get_similar_ships(
-            query_features=query_features,
-            top_k=top_k,
-            weights=weights
-        )
+        app.logger.info(f"Search returned {len(results)} results (aggregate={aggregate_by_index})")
         
-        # Format results
+        # Format results (now handles aggregated names and page numbers)
         formatted_results = format_search_results(results)
         
         # Generate report text
-        report_text = generate_classification_report(query_features, formatted_results, SIMILARITY_THRESHOLD)
+        all_query_features = {**filters, **similarity_features}
+        report_text = generate_classification_report(
+            all_query_features, 
+            formatted_results, 
+            SIMILARITY_THRESHOLD
+        )
         
         # Generate unique classification ID
         classification_id = str(uuid.uuid4())
         
-        # Store classification for later retrieval
+        # Store classification
         classification_data = {
             'id': classification_id,
-            'query_features': query_features,
+            'query_features': all_query_features,
+            'filters_used': filters,
+            'similarity_features_used': similarity_features,
+            'search_method': 'filter' if has_range_queries else 'similarity',
+            'aggregated': aggregate_by_index,
             'results': formatted_results,
             'report_text': report_text,
             'timestamp': time.time()
@@ -340,7 +363,11 @@ def classify_ship():
         # Calculate processing time
         processing_time = round(time.time() - start_time, 2)
         
-        # Create response matching frontend expectations
+        # Count filter vs similarity matches
+        filter_match_count = sum(1 for r in formatted_results if r.get('match_type') == 'filter')
+        similarity_match_count = sum(1 for r in formatted_results if r.get('match_type') == 'similarity')
+        
+        # Create response
         response = {
             'success': True,
             'total_matches': len(formatted_results),
@@ -348,7 +375,15 @@ def classify_ship():
             'processing_time': processing_time,
             'report_text': report_text,
             'classification_id': classification_id,
-            'timestamp': time.time()
+            'timestamp': time.time(),
+            'debug_info': {
+                'search_method': 'filter' if has_range_queries else 'similarity',
+                'aggregated': aggregate_by_index,
+                'filters_applied': filters if filters else None,
+                'similarity_features': list(similarity_features.keys()) if similarity_features else None,
+                'filter_matches': filter_match_count,
+                'similarity_fill_matches': similarity_match_count
+            }
         }
         
         return jsonify(response), 200
@@ -357,7 +392,8 @@ def classify_ship():
         app.logger.error(f"Classification error: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'error': f'Classification failed: {str(e)}'
+            'error': f'Classification failed: {str(e)}',
+            'details': str(e)
         }), 500
 
 

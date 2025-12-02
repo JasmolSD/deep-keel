@@ -1,6 +1,8 @@
 """
 Result formatting and grouping utilities.
-Handles aggregation of search results by ship class and formatting for display.
+Handles aggregation of search results by index and formatting for display.
+
+UPDATED: Now groups by 'index' column instead of ship_class|country|ship_type
 """
 
 import pandas as pd
@@ -26,96 +28,131 @@ class ResultFormatter:
         self,
         similarity_scores: np.ndarray,
         top_k: int = 10,
-        exclude_idx: Optional[int] = None
+        exclude_idx: Optional[int] = None,
+        aggregate: bool = True
     ) -> List[Dict[str, Any]]:
         """
-        Group results by ship class and format for display.
+        Group results by index and format for display.
+        
+        Aggregation happens BEFORE limiting to top_k to ensure we get
+        the correct number of unique results.
         
         Args:
             similarity_scores: Array of similarity scores
             top_k: Number of top results to return
             exclude_idx: Index to exclude (e.g., the query ship itself)
+            aggregate: Whether to aggregate by index (default True)
             
         Returns:
             List of formatted result dictionaries
         """
-        # Get top similar indices
+        # Get ALL indices sorted by similarity (we'll limit after aggregation)
         similar_indices = np.argsort(similarity_scores)[::-1]
         
         # Exclude query index if provided
         if exclude_idx is not None:
             similar_indices = similar_indices[similar_indices != exclude_idx]
         
-        # Get more results than needed for grouping
-        similar_indices = similar_indices[:top_k * 10]
-        
-        # Group by ship class, country, and type
-        grouped_results = self._group_by_ship_class(similar_indices, similarity_scores)
-        
-        # Sort by similarity and take top_k
-        results = sorted(
-            grouped_results.values(),
-            key=lambda x: x['similarity_score'],
-            reverse=True
-        )[:top_k]
+        if aggregate:
+            # Group by index column - process ALL results first
+            grouped_results = self._group_by_index(similar_indices, similarity_scores)
+            
+            # Sort by similarity and take top_k AFTER aggregation
+            results = sorted(
+                grouped_results.values(),
+                key=lambda x: x['similarity_score'],
+                reverse=True
+            )
+        else:
+            # No aggregation - just format individual results
+            results = []
+            for idx in similar_indices:
+                ship = self.df.iloc[idx]
+                results.append({
+                    'ship_name': ship.get('ship_name', 'Unknown'),
+                    'hull_number': ship.get('hull_number', ''),
+                    'country': ship.get('country', 'Unknown'),
+                    'ship_type': ship.get('ship_type', 'Unknown'),
+                    'ship_class': ship.get('ship_class', 'Unknown'),
+                    'ship_role': ship.get('ship_role', 'Unknown'),
+                    'similarity_score': similarity_scores[idx],
+                    'pages': self._format_page_range(ship),
+                    'index': ship.get('index', None),
+                    'length_metres': ship.get('length_metres', 0),
+                    'beam_metres': ship.get('beam_metres', 0),
+                    'draught_metres': ship.get('draught_metres', 0),
+                })
         
         # Apply similarity threshold
-        results = [r for r in results if r['similarity_score'] >= SIMILARITY_THRESHOLD]
+        results = [r for r in results if r.get('similarity_score', 0) >= SIMILARITY_THRESHOLD]
+        
+        # Limit to top_k AFTER aggregation
+        results = results[:top_k]
         
         # Add ranks
-        for i, result in enumerate(results[:top_k]):
+        for i, result in enumerate(results):
             result['rank'] = i + 1
         
-        return results[:top_k]
+        return results
     
-    def _group_by_ship_class(
+    def _group_by_index(
         self,
         indices: np.ndarray,
         similarity_scores: np.ndarray
-    ) -> Dict[str, Dict[str, Any]]:
+    ) -> Dict[Any, Dict[str, Any]]:
         """
-        Group ship results by class, country, and type.
+        Group ship results by the 'index' column.
         
         Args:
-            indices: Array of ship indices
+            indices: Array of ship indices (row positions in dataframe)
             similarity_scores: Array of similarity scores
             
         Returns:
-            Dictionary of grouped results
+            Dictionary of grouped results keyed by index value
         """
         grouped = {}
         
         for idx in indices:
             ship = self.df.iloc[idx]
             
-            # Extract key attributes
-            ship_class = ship.get('ship_class', 'Unknown')
-            country = ship.get('country', 'Unknown')
-            ship_type = ship.get('ship_type', 'Unknown')
+            # Use 'index' column as the grouping key
+            index_value = ship.get('index', None)
             
-            # Create unique key
-            result_key = f"{ship_class}|{country}|{ship_type}"
+            # Fallback to ship characteristics if 'index' column not present
+            if index_value is None or pd.isna(index_value):
+                result_key = (
+                    ship.get('ship_class', 'Unknown'),
+                    ship.get('country', 'Unknown'),
+                    ship.get('ship_type', 'Unknown')
+                )
+            else:
+                result_key = index_value
             
-            # Initialize group if first occurrence
+            # Initialize group if first occurrence (highest similarity for this index)
             if result_key not in grouped:
                 grouped[result_key] = {
                     'ship_names': set(),
                     'hull_numbers': set(),
-                    'country': country,
-                    'ship_type': ship_type,
-                    'ship_class': ship_class,
+                    'country': ship.get('country', 'Unknown'),
+                    'ship_type': ship.get('ship_type', 'Unknown'),
+                    'ship_class': ship.get('ship_class', 'Unknown'),
+                    'ship_role': ship.get('ship_role', 'Unknown'),
                     'similarity_score': similarity_scores[idx],
-                    'pages': self._format_page_range(ship)
+                    'pages': self._format_page_range(ship),
+                    'index': index_value,
+                    'length_metres': ship.get('length_metres', 0),
+                    'beam_metres': ship.get('beam_metres', 0),
+                    'draught_metres': ship.get('draught_metres', 0),
                 }
             
-            # Add ship name and hull number
+            # Add ship name and hull number to the group
             if pd.notna(ship.get('ship_name')):
                 grouped[result_key]['ship_names'].add(str(ship['ship_name']).strip())
             
             if pd.notna(ship.get('hull_number')):
                 grouped[result_key]['hull_numbers'].add(str(ship['hull_number']).strip())
         
-        # Convert sets to formatted strings
+        # Convert sets to formatted strings and lists
         for data in grouped.values():
             data['combined_name'] = self._format_combined_name(
                 data['ship_names'],
@@ -123,8 +160,9 @@ class ResultFormatter:
             )
             data['ship_names_list'] = sorted(data['ship_names'])
             data['hull_numbers_list'] = sorted(data['hull_numbers'])
+            data['ship_count'] = len(data['ship_names']) if data['ship_names'] else 1
             
-            # Remove sets
+            # Remove sets (not JSON serializable)
             del data['ship_names']
             del data['hull_numbers']
         
@@ -163,6 +201,9 @@ class ResultFormatter:
         sorted_names = sorted(ship_names)
         sorted_hull_numbers = sorted(hull_numbers)
         
+        if not sorted_names:
+            return "Unknown"
+        
         if len(sorted_names) == 1:
             combined = sorted_names[0]
             if sorted_hull_numbers:
@@ -193,8 +234,10 @@ class ResultFormatter:
         for result in results:
             similarity_pct = f"{result['similarity_score'] * 100:.1f}%"
             
+            name = result.get('combined_name', result.get('ship_name', 'Unknown'))
+            
             formatted_result = (
-                f"Name: {result['combined_name']}\n"
+                f"Name: {name}\n"
                 f"Country: {result['country']}\n"
                 f"Class: {result['ship_class']}\n"
                 f"Type: {result['ship_type']}\n"
@@ -208,29 +251,92 @@ class ResultFormatter:
     def format_filter_results(
         self,
         filtered_df: pd.DataFrame,
-        top_k: int = 20
+        top_k: int = 20,
+        aggregate: bool = True
     ) -> List[Dict[str, Any]]:
         """
         Format results from filter-based search.
         
+        Aggregation happens BEFORE limiting to top_k.
+        
         Args:
             filtered_df: Filtered DataFrame
             top_k: Maximum number of results
+            aggregate: Whether to aggregate by index (default True)
             
         Returns:
             List of formatted result dictionaries
         """
-        results = []
-        
-        for _, row in filtered_df.head(top_k).iterrows():
-            results.append({
-                'ship_name': row.get('ship_name', 'Unknown'),
-                'hull_number': row.get('hull_number', 'N/A'),
-                'country': row.get('country', 'Unknown'),
-                'ship_type': row.get('ship_type', 'Unknown'),
-                'ship_class': row.get('ship_class', 'Unknown'),
-                'pages': self._format_page_range(row),
-                'unique_id': row.get('unique_id', str(row.name))
-            })
-        
-        return results
+        if aggregate:
+            # Group by index column BEFORE limiting
+            grouped = {}
+            
+            for _, row in filtered_df.iterrows():
+                index_value = row.get('index', None)
+                
+                # Fallback key if no index
+                if index_value is None or pd.isna(index_value):
+                    result_key = (
+                        row.get('ship_class', 'Unknown'),
+                        row.get('country', 'Unknown'),
+                        row.get('ship_type', 'Unknown')
+                    )
+                else:
+                    result_key = index_value
+                
+                if result_key not in grouped:
+                    grouped[result_key] = {
+                        'ship_names': set(),
+                        'hull_numbers': set(),
+                        'country': row.get('country', 'Unknown'),
+                        'ship_type': row.get('ship_type', 'Unknown'),
+                        'ship_class': row.get('ship_class', 'Unknown'),
+                        'ship_role': row.get('ship_role', 'Unknown'),
+                        'pages': self._format_page_range(row),
+                        'index': index_value,
+                        'length_metres': row.get('length_metres', 0),
+                        'beam_metres': row.get('beam_metres', 0),
+                        'draught_metres': row.get('draught_metres', 0),
+                        'unique_id': row.get('unique_id', str(row.name))
+                    }
+                
+                if pd.notna(row.get('ship_name')):
+                    grouped[result_key]['ship_names'].add(str(row['ship_name']).strip())
+                if pd.notna(row.get('hull_number')):
+                    grouped[result_key]['hull_numbers'].add(str(row['hull_number']).strip())
+            
+            # Convert to list and format
+            results = []
+            for data in grouped.values():
+                data['combined_name'] = self._format_combined_name(
+                    data['ship_names'],
+                    data['hull_numbers']
+                )
+                data['ship_names_list'] = sorted(data['ship_names'])
+                data['hull_numbers_list'] = sorted(data['hull_numbers'])
+                data['ship_count'] = len(data['ship_names']) if data['ship_names'] else 1
+                del data['ship_names']
+                del data['hull_numbers']
+                results.append(data)
+            
+            # Limit to top_k AFTER aggregation
+            return results[:top_k]
+        else:
+            # No aggregation
+            results = []
+            for _, row in filtered_df.head(top_k).iterrows():
+                results.append({
+                    'ship_name': row.get('ship_name', 'Unknown'),
+                    'hull_number': row.get('hull_number', 'N/A'),
+                    'country': row.get('country', 'Unknown'),
+                    'ship_type': row.get('ship_type', 'Unknown'),
+                    'ship_class': row.get('ship_class', 'Unknown'),
+                    'ship_role': row.get('ship_role', 'Unknown'),
+                    'pages': self._format_page_range(row),
+                    'index': row.get('index', None),
+                    'unique_id': row.get('unique_id', str(row.name)),
+                    'length_metres': row.get('length_metres', 0),
+                    'beam_metres': row.get('beam_metres', 0),
+                    'draught_metres': row.get('draught_metres', 0),
+                })
+            return results

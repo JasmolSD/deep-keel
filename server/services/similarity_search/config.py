@@ -7,10 +7,10 @@ from typing import Dict
 # Feature columns to load from the dataset
 SELECTED_FEATURES = [
     'country', 'ship_name', 'hull_number', 'ship_class', 'ship_type', 'ship_role',
-    'guid', 'start_page', 'end_page',
+    'guid', 'start_page', 'end_page', 'index',
     
     # Dimensions and performance
-    'length_metres', 'beam_metres', 'speed_knots',
+    'length_metres', 'beam_metres', 'speed_knots', 'draught_metres',
     
     # Hull and superstructure
     'hull_form', 'hull_shape', 'bow_shape',
@@ -36,11 +36,11 @@ SELECTED_FEATURES = [
 
 # Numeric feature columns
 NUMERIC_FEATURES = [
-    'length_metres', 'beam_metres', 'speed_knots',
+    'length_metres', 'beam_metres', 'speed_knots', 'draught_metres',
     'distinct_superstructure_blocks_number', 'funnels_total', 'smokestacks_total',
     'main_gun_turrets_total', 'gunmounts_number',
     'torpedo_tubes_visible_number', 
-    'CIWS_count'
+    'CIWS_count', 'index'
 ]
 
 # Categorical feature columns (text cols for TF-IDF)
@@ -57,13 +57,13 @@ BINARY_FEATURES = ['flight_deck', 'helicopter_platform', 'hangar']
 
 # Default similarity weights
 DEFAULT_WEIGHTS: Dict[str, float] = {
-    'numerical': 0.2,
-    'categorical': 0,
-    'text': 0.4,
-    'binary': 0.4
+    'numerical': 0.4,
+    'categorical': 0.3,
+    'text': 0.2,
+    'binary': 0.1
 }
 
-# Similarity threshold
+# Similarity threshold (30%)
 SIMILARITY_THRESHOLD = 0.3
 
 # TF-IDF parameters
