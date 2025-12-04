@@ -207,16 +207,16 @@ const UploadPage = () => {
             const transformedMatches = transformMatchesToDisplay(classificationResult.matches);
 
             // Calculate average similarity
-            const avgSimilarity = calculateAverageSimilarity(transformedMatches);
+            const maxSimilarity = calculateMaxSimilarity(transformedMatches);
 
             // Get similarity level
-            const similarityLevel = getSimilarityLevel(avgSimilarity);
+            const similarityLevel = getSimilarityLevel(maxSimilarity);
 
             // Transform backend response to Results page format
             const resultsData = {
                 vessels_detected: classificationResult.total_matches || 0,
                 processing_time: classificationResult.processing_time || 0,
-                average_similarity: avgSimilarity,
+                average_similarity: maxSimilarity,
                 similarity_level: similarityLevel,
                 matches: transformedMatches,
                 image_metadata: {
@@ -246,16 +246,12 @@ const UploadPage = () => {
     }
 
     /**
-     * Calculate average similarity from matches
+     * Calculate max similarity from matches
      */
-    const calculateAverageSimilarity = (matches) => {
+    const calculateMaxSimilarity = (matches) => {
         if (!matches || matches.length === 0) return 0;
 
-        const totalSimilarity = matches.reduce((sum, match) => {
-            return sum + (match.confidence * 100);
-        }, 0);
-
-        return totalSimilarity / matches.length;
+        return Math.max(...matches.map(match => match.confidence * 100));
     }
 
     /**

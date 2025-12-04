@@ -52,15 +52,21 @@ CATEGORICAL_FEATURES = [
     'length_to_beam_ratio', 'freeboard_height','CIWS_positions'
 ]
 
+
+# Text search fields (partial/fuzzy string matching)
+# These fields use string similarity rather than exact matching
+TEXT_SEARCH_FEATURES = ['ship_name', 'hull_number', 'ship_class']
+
 # Binary feature columns
 BINARY_FEATURES = ['flight_deck', 'helicopter_platform', 'hangar']
 
 # Default similarity weights
 DEFAULT_WEIGHTS: Dict[str, float] = {
-    'numerical': 0.4,
-    'categorical': 0.3,
-    'text': 0.2,
-    'binary': 0.1
+    'numerical': 0.3,
+    'categorical': 0.2,
+    'text': 0.15,
+    'binary': 0.1,
+    'name': 0.25
 }
 
 # Similarity threshold (30%)

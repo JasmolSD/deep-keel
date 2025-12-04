@@ -101,7 +101,7 @@ const Results = () => {
                         </svg>
                         <div className="similarity-value">{avgSimilarity.toFixed(0)}%</div>
                     </div>
-                    <div className="card-label">{similarity.level} Similarity</div>
+                    <div className="card-label">{similarity.level} Similarity of Top Match</div>
                 </div>
 
                 <div className="summary-card">

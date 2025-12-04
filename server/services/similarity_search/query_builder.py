@@ -1,11 +1,6 @@
 """
 Query builder for preparing custom search queries.
 Handles conversion of user input to feature vectors.
-
-FIXES APPLIED:
-1. Return ranges instead of midpoint values for numerical features
-2. Only include features that are actually specified in the query
-3. Proper handling of min/max format
 """
 
 import pandas as pd
@@ -14,7 +9,7 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from .config import (
-    NUMERIC_FEATURES, CATEGORICAL_FEATURES, BINARY_FEATURES
+    NUMERIC_FEATURES, CATEGORICAL_FEATURES, BINARY_FEATURES, TEXT_SEARCH_FEATURES
 )
 
 
@@ -237,6 +232,8 @@ class QueryBuilder:
         Prepare text features from query.
         
         Only includes features that are actually specified.
+        Now includes TEXT_SEARCH_FEATURES (ship_name, hull_number, ship_class) 
+        for better text-based matching.
         
         Args:
             query_features: Dictionary of query features
@@ -246,7 +243,10 @@ class QueryBuilder:
         """
         text_parts = []
         
-        for col in CATEGORICAL_FEATURES:
+        # Include both categorical features and text search features
+        all_text_fields = list(CATEGORICAL_FEATURES) + list(TEXT_SEARCH_FEATURES)
+        
+        for col in all_text_fields:
             if col not in query_features:
                 continue
             

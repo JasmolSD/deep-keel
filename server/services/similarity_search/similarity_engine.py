@@ -18,7 +18,7 @@ from scipy.sparse import spmatrix
 
 from .config import (
     NUMERIC_FEATURES, CATEGORICAL_FEATURES, BINARY_FEATURES,
-    TFIDF_MAX_FEATURES, TFIDF_STOP_WORDS
+    TFIDF_MAX_FEATURES, TFIDF_STOP_WORDS, TEXT_SEARCH_FEATURES
 )
 
 
@@ -219,6 +219,8 @@ class SimilarityEngine:
         
         KEY FIX: Dynamically adjust weights based on which feature types
         are actually provided in the query.
+        
+        Now includes name-based similarity for ship_name, hull_number, ship_class.
         """
         from .query_builder import QueryBuilder
         
@@ -236,17 +238,23 @@ class SimilarityEngine:
         text_sim, has_text = self._compute_text_similarity_custom(query_text)
         bin_sim, has_bin = self._compute_binary_similarity_custom(query_bin)
         
+        # NEW: Compute name-based similarity for text search features
+        name_sim, has_name = self._compute_name_similarity(query_features)
+        
         # DYNAMIC WEIGHT ADJUSTMENT
         # Only include weights for feature types that were actually specified
         active_weights = {}
         if has_num:
-            active_weights['numerical'] = weights['numerical']
+            active_weights['numerical'] = weights.get('numerical', 0.35)
         if has_cat:
-            active_weights['categorical'] = weights['categorical']
+            active_weights['categorical'] = weights.get('categorical', 0.30)
         if has_text:
-            active_weights['text'] = weights['text']
+            active_weights['text'] = weights.get('text', 0.20)
         if has_bin:
-            active_weights['binary'] = weights['binary']
+            active_weights['binary'] = weights.get('binary', 0.15)
+        if has_name:
+            # Give name matching a significant weight when present
+            active_weights['name'] = weights.get('name', 0.40)
         
         # Normalize active weights to sum to 1.0
         if not active_weights:
@@ -266,6 +274,8 @@ class SimilarityEngine:
             combined += normalized_weights['text'] * text_sim
         if has_bin:
             combined += normalized_weights['binary'] * bin_sim
+        if has_name:
+            combined += normalized_weights['name'] * name_sim
         
         return combined
     
@@ -428,3 +438,156 @@ class SimilarityEngine:
         
         return similarities, valid_features > 0
     
+    def _compute_name_similarity(
+        self,
+        query_features: dict
+    ) -> tuple[np.ndarray, bool]:
+        """
+        Compute name-based similarity using multiple matching strategies.
+        
+        Matching strategies (in order of priority):
+        1. Exact match = 1.0
+        2. Substring match = proportional score (boosted)
+        3. Word contains query (for "sydny" in "HMAS Sydney") = high score
+        4. Word/token overlap = proportional to words matched
+        5. Edit distance / fuzzy match = for typos like "sydny" vs "sydney"
+        
+        Args:
+            query_features: Dictionary containing potential name fields
+            
+        Returns:
+            Tuple of (similarity_array, has_data_bool)
+        """
+        name_fields = {}
+        for field in TEXT_SEARCH_FEATURES:
+            if field in query_features and query_features[field]:
+                name_fields[field] = str(query_features[field]).lower().strip()
+        
+        if not name_fields:
+            return np.zeros(len(self.df)), False
+        
+        similarities = np.zeros(len(self.df))
+        
+        for idx in range(len(self.df)):
+            row = self.df.iloc[idx]
+            field_scores = []
+            
+            for field, query_value in name_fields.items():
+                if field not in self.df.columns:
+                    continue
+                    
+                db_value = str(row.get(field, '')).lower().strip()
+                
+                if not db_value or db_value == 'nan' or db_value == 'unknown':
+                    field_scores.append(0.0)
+                    continue
+                
+                # Strategy 1: Exact match
+                if query_value == db_value:
+                    field_scores.append(1.0)
+                    continue
+                
+                # Strategy 2: Substring match (query in db or db in query)
+                if query_value in db_value:
+                    score = len(query_value) / len(db_value)
+                    field_scores.append(min(score * 1.3, 0.95))
+                    continue
+                elif db_value in query_value:
+                    score = len(db_value) / len(query_value)
+                    field_scores.append(min(score * 1.3, 0.95))
+                    continue
+                
+                # Strategy 3: Check if query is similar to any WORD in db_value
+                # This handles "sydny" matching "HMAS Sydney (FFG 03)"
+                db_words = db_value.replace('(', ' ').replace(')', ' ').split()
+                best_word_score = 0.0
+                
+                for db_word in db_words:
+                    if len(db_word) < 2:  # Skip very short words
+                        continue
+                    
+                    # Check substring within word
+                    if query_value in db_word:
+                        word_score = len(query_value) / len(db_word)
+                        best_word_score = max(best_word_score, min(word_score * 1.2, 0.9))
+                    elif db_word in query_value:
+                        word_score = len(db_word) / len(query_value)
+                        best_word_score = max(best_word_score, min(word_score * 1.2, 0.9))
+                    else:
+                        # Check edit distance for typos (simple approach)
+                        word_sim = self._simple_edit_similarity(query_value, db_word)
+                        if word_sim > 0.6:  # At least 60% similar
+                            best_word_score = max(best_word_score, word_sim * 0.85)
+                
+                if best_word_score > 0:
+                    field_scores.append(best_word_score)
+                    continue
+                
+                # Strategy 4: Word/token overlap
+                query_words = set(query_value.split())
+                db_words_set = set(db_words)
+                
+                if query_words and db_words_set:
+                    common_words = query_words & db_words_set
+                    if common_words:
+                        score = len(common_words) / max(len(query_words), len(db_words_set))
+                        field_scores.append(min(score * 0.9, 0.8))
+                        continue
+                
+                # Strategy 5: Overall character-based fuzzy match
+                char_sim = self._simple_edit_similarity(query_value, db_value)
+                if char_sim > 0.4:  # At least 40% similar overall
+                    field_scores.append(char_sim * 0.6)
+                    continue
+                
+                # No meaningful match
+                field_scores.append(0.0)
+            
+            if field_scores:
+                similarities[idx] = np.mean(field_scores)
+        
+        return similarities, True
+    
+    def _simple_edit_similarity(self, s1: str, s2: str) -> float:
+        """
+        Compute a simple edit-distance-based similarity between two strings.
+        
+        Uses a simplified approach based on common character sequences.
+        Returns a value between 0 and 1.
+        """
+        if not s1 or not s2:
+            return 0.0
+        
+        if s1 == s2:
+            return 1.0
+        
+        # Make s1 the shorter string
+        if len(s1) > len(s2):
+            s1, s2 = s2, s1
+        
+        # Count matching characters in sequence
+        matches = 0
+        s2_remaining = s2
+        
+        for char in s1:
+            if char in s2_remaining:
+                matches += 1
+                # Remove first occurrence to avoid double counting
+                s2_remaining = s2_remaining.replace(char, '', 1)
+        
+        # Calculate similarity based on matches relative to longer string
+        similarity = (2.0 * matches) / (len(s1) + len(s2))
+        
+        # Bonus for same starting characters (important for typos)
+        prefix_match = 0
+        for i in range(min(len(s1), len(s2))):
+            if s1[i] == s2[i]:
+                prefix_match += 1
+            else:
+                break
+        
+        if prefix_match > 0:
+            prefix_bonus = (prefix_match / min(len(s1), len(s2))) * 0.2
+            similarity = min(1.0, similarity + prefix_bonus)
+        
+        return similarity

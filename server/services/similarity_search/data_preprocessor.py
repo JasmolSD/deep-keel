@@ -9,7 +9,7 @@ from pathlib import Path
 
 from .config import (
     SELECTED_FEATURES, NUMERIC_FEATURES, CATEGORICAL_FEATURES,
-    BINARY_FEATURES, BINARY_VALUE_MAP
+    BINARY_FEATURES, BINARY_VALUE_MAP, TEXT_SEARCH_FEATURES
 )
 
 
@@ -109,18 +109,25 @@ class DataPreprocessor:
                 self.df[col] = self.df[col].map(BINARY_VALUE_MAP).fillna(0).astype(int)
     
     def _create_text_features(self) -> None:
-        """Create combined text feature for TF-IDF vectorization."""
+        """Create combined text feature for TF-IDF vectorization.
+        
+        Now includes TEXT_SEARCH_FEATURES (ship_name, hull_number, ship_class)
+        for improved text-based similarity matching.
+        """
         assert self.df is not None
         text_parts = []
         
-        for col in CATEGORICAL_FEATURES:
+        # Include both categorical features and text search features
+        all_text_columns = list(CATEGORICAL_FEATURES) + list(TEXT_SEARCH_FEATURES)
+        
+        for col in all_text_columns:
             if col in self.df.columns:
                 text_parts.append(self.df[col].fillna('').astype(str))
         
         if text_parts:
             self.df['text_features'] = text_parts[0]
             for part in text_parts[1:]:
-                self.df['text_features'] = self.df['text_features'] + ' ' + part
+                self.df['text_features'] = self.df['text_features'] + ' ' + part    # type: ignore
         else:
             self.df['text_features'] = ''
     

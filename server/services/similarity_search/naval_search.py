@@ -7,7 +7,7 @@ UPDATED: Aggregation now happens during search phase, before limiting to top_k
 
 import pandas as pd
 from typing import List, Dict, Any, Optional, Union
-from .config import DEFAULT_WEIGHTS, DEFAULT_TOP_K
+from .config import DEFAULT_WEIGHTS, DEFAULT_TOP_K, TEXT_SEARCH_FEATURES
 from .data_preprocessor import DataPreprocessor
 from .similarity_engine import SimilarityEngine
 from .result_formatter import ResultFormatter
@@ -173,10 +173,11 @@ class NavalSimilaritySearch:
         aggregate: bool = True,
         fill_with_similarity: bool = True,
         similarity_features: Optional[Dict[str, Any]] = None,
-        weights: Optional[Dict[str, float]] = None
+        weights: Optional[Dict[str, float]] = None,
+        text_search_fields: Optional[Dict[str, str]] = None
     ) -> List[Dict]:
         """
-        Search ships by filters (exact matches and ranges).
+        Search ships by filters (exact matches, ranges, and text search).
         
         If filter results are fewer than top_k and fill_with_similarity=True,
         additional results will be fetched using similarity search.
@@ -188,16 +189,60 @@ class NavalSimilaritySearch:
                 - Regular key: exact match (e.g., {'ship_type': 'Destroyer'})
                 - Key with __gte: greater than or equal (e.g., {'length_metres__gte': 100})
                 - Key with __lte: less than or equal (e.g., {'length_metres__lte': 200})
+                - Key with __contains: partial text match (e.g., {'ship_name__contains': 'Enterprise'})
             top_k: Maximum number of results to return
             aggregate: Whether to aggregate results by index (default True)
             fill_with_similarity: Whether to fill remaining slots with similarity results (default True)
             similarity_features: Features to use for similarity search when filling
             weights: Weights for similarity search
+            text_search_fields: Dictionary of text fields to search with partial matching
         
         Returns:
             List of matching ships (aggregated by index if aggregate=True)
         """
         df = self.df.copy()     # type: ignore
+        
+        # Process text search fields first (fuzzy matching)
+        if text_search_fields:
+            for field, search_term in text_search_fields.items():
+                if field in df.columns and search_term:
+                    search_term_lower = str(search_term).lower().strip()
+                    
+                    # Create a mask for fuzzy matching
+                    def fuzzy_match(db_value):
+                        """Check if search term fuzzy-matches the database value."""
+                        if pd.isna(db_value):
+                            return False
+                        
+                        db_value_lower = str(db_value).lower().strip()
+                        
+                        if not db_value_lower or db_value_lower == 'nan':
+                            return False
+                        
+                        # Strategy 1: Exact substring match
+                        if search_term_lower in db_value_lower:
+                            return True
+                        
+                        # Strategy 2: Check each word in the database value
+                        db_words = db_value_lower.replace('(', ' ').replace(')', ' ').split()
+                        for db_word in db_words:
+                            if len(db_word) < 2:
+                                continue
+                            
+                            # Substring within word
+                            if search_term_lower in db_word or db_word in search_term_lower:
+                                return True
+                            
+                            # Fuzzy match (for typos like "sydny" vs "sydney")
+                            if self._fuzzy_match_strings(search_term_lower, db_word) > 0.7:
+                                return True
+                        
+                        return False
+                    
+                    # Apply fuzzy matching filter
+                    mask = df[field].apply(fuzzy_match)
+                    df = df[mask]
+                    print(f"Fuzzy text search {field} ~ '{search_term}', remaining: {len(df)}")
         
         for key, value in filters.items():
             if '__gte' in key:
@@ -226,6 +271,17 @@ class NavalSimilaritySearch:
                 if field in df.columns:
                     df = df[df[field] < value]
             
+            elif '__contains' in key:
+                # Partial text match
+                field = key.replace('__contains', '')
+                if field in df.columns:
+                    df = df[df[field].astype(str).str.lower().str.contains(
+                        str(value).lower(),
+                        na=False,
+                        regex=False
+                    )]
+                    print(f"Text search {field} contains '{value}', remaining: {len(df)}")
+            
             else:
                 # Exact match
                 if key in df.columns:
@@ -248,6 +304,9 @@ class NavalSimilaritySearch:
         
         # If we have enough results or filling is disabled, return filter results
         if len(filter_results) >= top_k or not fill_with_similarity:
+            # Mark filter results
+            for result in filter_results:
+                result['match_type'] = 'filter'
             return filter_results
         
         # Need to fill remaining slots with similarity search
@@ -263,15 +322,29 @@ class NavalSimilaritySearch:
         
         print(f"Excluding {len(exclude_indices)} indices from similarity search: {exclude_indices}")
         
-        # Build similarity features from filters if not provided
-        if similarity_features is None:
-            similarity_features = self._build_similarity_features_from_filters(filters)
+        # Build similarity features - IMPORTANT: Include text_search_fields!
+        combined_similarity_features = {}
         
-        # Only run similarity search if we have features to search with
+        # Start with provided similarity features
         if similarity_features:
+            combined_similarity_features.update(similarity_features)
+        
+        # Add text search fields (ship_name, hull_number) for name-based similarity
+        if text_search_fields:
+            combined_similarity_features.update(text_search_fields)
+            print(f"Added text search fields to similarity: {text_search_fields}")
+        
+        # Also extract features from filters if needed
+        if not combined_similarity_features:
+            combined_similarity_features = self._build_similarity_features_from_filters(filters)
+        
+        # Run similarity search if we have ANY features to search with
+        if combined_similarity_features:
+            print(f"Running similarity search with features: {list(combined_similarity_features.keys())}")
+            
             # Get more similarity results than needed to account for exclusions
             similarity_results = self._find_similar_to_custom(
-                query_features=similarity_features,
+                query_features=combined_similarity_features,
                 top_k=remaining_slots + len(exclude_indices) + 10,  # Get extra to account for exclusions
                 weights=weights if weights else DEFAULT_WEIGHTS.copy(),
                 aggregate=aggregate
@@ -305,6 +378,7 @@ class NavalSimilaritySearch:
             
             return combined_results
         
+        # No similarity features available - just return filter results (already marked)
         return filter_results
     
     def _build_similarity_features_from_filters(
@@ -357,6 +431,57 @@ class NavalSimilaritySearch:
                 features[field] = max_val
         
         return features
+    
+    def _fuzzy_match_strings(self, s1: str, s2: str) -> float:
+        """
+        Compute fuzzy similarity between two strings for filtering.
+        
+        Handles typos like "sydny" vs "sydney" by checking:
+        - Character overlap with position awareness
+        - Prefix matching bonus
+        
+        Args:
+            s1: First string (search term)
+            s2: Second string (database value)
+            
+        Returns:
+            Similarity score between 0 and 1
+        """
+        if not s1 or not s2:
+            return 0.0
+        
+        if s1 == s2:
+            return 1.0
+        
+        # Make s1 the shorter string
+        if len(s1) > len(s2):
+            s1, s2 = s2, s1
+        
+        # Count matching characters
+        matches = 0
+        s2_remaining = s2
+        
+        for char in s1:
+            if char in s2_remaining:
+                matches += 1
+                s2_remaining = s2_remaining.replace(char, '', 1)
+        
+        # Base similarity
+        similarity = (2.0 * matches) / (len(s1) + len(s2))
+        
+        # Bonus for matching prefix (important for typos)
+        prefix_match = 0
+        for i in range(min(len(s1), len(s2))):
+            if s1[i] == s2[i]:
+                prefix_match += 1
+            else:
+                break
+        
+        if prefix_match > 0:
+            prefix_bonus = (prefix_match / min(len(s1), len(s2))) * 0.2
+            similarity = min(1.0, similarity + prefix_bonus)
+        
+        return similarity
     
     @staticmethod
     def _apply_filter(
