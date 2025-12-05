@@ -170,8 +170,6 @@ class NavalSimilaritySearch:
         Returns:
             List of similar ship results
         """
-        assert self.df is not None
-        
         # Compute similarities
         similarity_scores = self.similarity_engine.compute_similarities(    # type: ignore
             query_features=query_features,
@@ -179,6 +177,7 @@ class NavalSimilaritySearch:
         )
         
         # Apply country pre-filter if specified
+        assert self.df is not None
         if country_filter and 'country' in self.df.columns:
             # Create mask for non-matching countries
             country_mask = self.df['country'] != country_filter
@@ -349,64 +348,138 @@ class NavalSimilaritySearch:
         
         print(f"Excluding {len(exclude_indices)} indices from similarity search: {exclude_indices}")
         
-        # Build similarity features - IMPORTANT: Include text_search_fields!
-        combined_similarity_features = {}
+        # IMPORTANT: Apply country filter FIRST before any similarity computation
+        assert self.df is not None
+        country_filter = filters.get('country')
+        if country_filter:
+            country_filtered_df = self.df[self.df['country'] == country_filter].copy()
+            print(f"Pre-filtered to country '{country_filter}': {len(country_filtered_df)} ships")
+        else:
+            country_filtered_df = self.df.copy()
         
-        # Start with provided similarity features
-        if similarity_features:
-            combined_similarity_features.update(similarity_features)
+        # Exclude already-found indices from the country-filtered dataframe
+        if exclude_indices:
+            country_filtered_df = country_filtered_df[~country_filtered_df['index'].isin(exclude_indices)]
+            print(f"After excluding found indices: {len(country_filtered_df)} ships remain")
         
-        # Add text search fields (ship_name, hull_number) for name-based similarity
-        if text_search_fields:
-            combined_similarity_features.update(text_search_fields)
-            print(f"Added text search fields to similarity: {text_search_fields}")
-        
-        # Also extract features from filters if needed
-        if not combined_similarity_features:
-            combined_similarity_features = self._build_similarity_features_from_filters(filters)
-        
-        # Run similarity search if we have ANY features to search with
-        if combined_similarity_features:
-            print(f"Running similarity search with features: {list(combined_similarity_features.keys())}")
-            
-            # Get more similarity results than needed to account for exclusions
-            similarity_results = self._find_similar_to_custom(
-                query_features=combined_similarity_features,
-                top_k=remaining_slots + len(exclude_indices) + 10,  # Get extra to account for exclusions
-                weights=weights if weights else DEFAULT_WEIGHTS.copy(),
-                aggregate=aggregate
-            )
-            
-            # Filter out results that share index with filter results
-            additional_results = []
-            for result in similarity_results:
-                result_index = result.get('index')
-                if result_index not in exclude_indices:
-                    # Mark this as a similarity-based result
-                    result['match_type'] = 'similarity'
-                    additional_results.append(result)
-                    exclude_indices.add(result_index)  # Avoid duplicates in similarity results too
-                    
-                    if len(additional_results) >= remaining_slots:
-                        break
-            
-            print(f"Added {len(additional_results)} similarity results")
-            
-            # Mark filter results
+        if len(country_filtered_df) == 0:
+            print("No ships remaining after filtering, returning filter results only")
             for result in filter_results:
                 result['match_type'] = 'filter'
-            
-            # Combine results
-            combined_results = filter_results + additional_results
-            
-            # Re-assign ranks
-            for i, result in enumerate(combined_results, 1):
-                result['rank'] = i
-            
-            return combined_results
+            return filter_results
         
-        # No similarity features available - just return filter results (already marked)
-        return filter_results
+        # Compute similarity scores for ALL ships in country-filtered data
+        # Use a combined scoring approach: text similarity + other features
+        country_filtered_df = country_filtered_df.copy()
+        country_filtered_df['_fill_score'] = 0.0
+        
+        # Score based on text search fields (name matching)
+        if text_search_fields:
+            print(f"Computing text similarity scores: {text_search_fields}")
+            for field, search_term in text_search_fields.items():
+                if field in country_filtered_df.columns and search_term:
+                    search_term_lower = str(search_term).lower().strip()
+                    
+                    def compute_text_score(db_value):
+                        """Compute similarity score (0-1) instead of boolean match."""
+                        if pd.isna(db_value):
+                            return 0.0
+                        db_value_lower = str(db_value).lower().strip()
+                        if not db_value_lower or db_value_lower == 'nan':
+                            return 0.0
+                        
+                        # Exact match
+                        if search_term_lower == db_value_lower:
+                            return 1.0
+                        
+                        # Substring match (search term in db value)
+                        if search_term_lower in db_value_lower:
+                            return 0.9
+                        
+                        # Substring match (db value in search term)
+                        if db_value_lower in search_term_lower:
+                            return 0.8
+                        
+                        # Fuzzy match
+                        similarity = self._fuzzy_match_strings(search_term_lower, db_value_lower)
+                        return similarity * 0.7  # Scale fuzzy matches
+                    
+                    field_scores = country_filtered_df[field].apply(compute_text_score)
+                    country_filtered_df['_fill_score'] = country_filtered_df['_fill_score'] + field_scores
+                    
+                    # Log some stats
+                    high_scores = (field_scores >= 0.5).sum()
+                    print(f"Text similarity '{field}' = '{search_term}': {high_scores} ships with score >= 0.5")
+        
+        # Add scores based on other similarity features
+        if similarity_features:
+            print(f"Adding similarity feature scores: {list(similarity_features.keys())}")
+            for field, value in similarity_features.items():
+                if field in country_filtered_df.columns and field not in (text_search_fields or {}):
+                    if isinstance(value, (int, float)):
+                        # Numeric similarity - inverse distance
+                        col_values = pd.to_numeric(country_filtered_df[field], errors='coerce').fillna(0)
+                        if col_values.std() > 0:
+                            normalized_diff = abs(col_values - value) / col_values.std()
+                            field_scores = 1 / (1 + normalized_diff)  # Score between 0 and 1
+                            country_filtered_df['_fill_score'] = country_filtered_df['_fill_score'] + field_scores * 0.3
+                    elif isinstance(value, str):
+                        # Categorical similarity - exact match bonus
+                        exact_matches = (country_filtered_df[field].astype(str).str.lower() == str(value).lower())
+                        country_filtered_df.loc[exact_matches, '_fill_score'] += 0.5
+        
+        # Sort by score descending and take top results
+        country_filtered_df = country_filtered_df.sort_values('_fill_score', ascending=False)
+        
+        # If all scores are 0 (no matching features), sort by ship_class as fallback
+        if country_filtered_df['_fill_score'].max() == 0:
+            print("No scoring features matched, sorting by ship_class as fallback")
+            if 'ship_class' in country_filtered_df.columns:
+                country_filtered_df = country_filtered_df.sort_values('ship_class')
+        
+        # Log top scores
+        top_scores = country_filtered_df['_fill_score'].head(5).tolist()
+        print(f"Top 5 fill scores: {[round(s, 3) for s in top_scores]}")
+        
+        # Take top remaining_slots ships
+        top_ships_df = country_filtered_df.head(remaining_slots + 5)  # Get a few extra in case of aggregation
+        
+        # Format results
+        additional_results = self.result_formatter.format_filter_results(   # type: ignore
+            top_ships_df,
+            top_k=remaining_slots,
+            aggregate=aggregate
+        )
+        
+        # Add similarity scores and mark as similarity results
+        for i, result in enumerate(additional_results):
+            result['match_type'] = 'similarity'
+            # Use the fill score as similarity score (normalize to 0-1 range)
+            idx = result.get('index')
+            if idx is not None and idx in country_filtered_df['index'].values:
+                fill_score = country_filtered_df[country_filtered_df['index'] == idx]['_fill_score'].iloc[0]
+                # Normalize: assume max reasonable score is ~2.0
+                result['similarity_score'] = min(fill_score / 2.0, 0.99)
+            else:
+                result['similarity_score'] = 0.3  # Default for aggregated results
+        
+        # Limit to remaining_slots
+        additional_results = additional_results[:remaining_slots]
+        
+        print(f"Added {len(additional_results)} total additional results")
+        
+        # Mark filter results
+        for result in filter_results:
+            result['match_type'] = 'filter'
+        
+        # Combine results
+        combined_results = filter_results + additional_results
+        
+        # Re-assign ranks
+        for i, result in enumerate(combined_results, 1):
+            result['rank'] = i
+        
+        return combined_results
     
     def _build_similarity_features_from_filters(
         self,
