@@ -1,11 +1,17 @@
 // pages/Results.jsx
-import './Results.css'
+import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom';
+import './Results.css'
 
 const Results = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const results = location.state?.results;
+
+    // Scroll to top when component mounts
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
     const handleNewAnalysis = () => {
         navigate('/upload');
@@ -96,7 +102,7 @@ const Results = () => {
                                 fill="none"
                                 stroke="currentColor"
                                 strokeWidth="8"
-                                strokeDasharray={`${(avgSimilarity / 100) * 110} 110`}
+                                strokeDasharray={`${(avgSimilarity / 100) * 126} 126`}
                             />
                         </svg>
                         <div className="similarity-value">{avgSimilarity.toFixed(0)}%</div>

@@ -1,7 +1,7 @@
 // components/NavigationBar.jsx
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import shieldIcon from '../assets/shield.png'
+import binocularsIcon from '../assets/binoculars.png'
 import './NavigationBar.css'
 
 const NavigationBar = ({ hasResults }) => {
@@ -79,7 +79,7 @@ const NavigationBar = ({ hasResults }) => {
                 <div className="nav-brand">
                     <div className="logo-wrapper">
                         <img
-                            src={shieldIcon}
+                            src={binocularsIcon}
                             alt="Eyes in the Sky Shield"
                             className="logo-icon"
                         />
