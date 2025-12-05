@@ -245,7 +245,7 @@ deep-keel/
 
 **Team**: UC Berkeley MIDS Capstone  
 **Course**: MIDS 210  
-**Lead**: Jasmol Singh Dhesi
+**Members**: Jasmol Singh Dhesi, Sarah Farooq, Wesley Thomas, Danielle Yoseloff
 
 Questions? Issues? Open an issue or reach out through UC Berkeley MIDS!
 
