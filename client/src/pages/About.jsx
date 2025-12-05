@@ -2,7 +2,7 @@
 import './About.css'
 import jasmolPhoto from '../assets/team_photos/jasmol.JPG'
 import sarahPhoto from '../assets/team_photos/sarah.jpg'
-import wesleyPhoto from '../assets/team_photos/wesley.jpg'
+import wesleyPhoto from '../assets/team_photos/wesley.JPEG'
 import daniellePhoto from '../assets/team_photos/danielle.jpg'
 
 const AboutPage = () => {
