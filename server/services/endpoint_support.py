@@ -167,6 +167,14 @@ def process_classification_request(
     elif similarity_features:
         if logger:
             logger.info("Using similarity-based search")
+        
+        # Include country from filters for pre-filtering during similarity search
+        query_with_country = similarity_features.copy()
+        if 'country' in filters:
+            query_with_country['country'] = filters['country']
+            if logger:
+                logger.info(f"Including country filter in similarity search: {filters['country']}")
+
         results = search_engine.get_similar_ships(
             query_features=similarity_features,
             top_k=top_k,

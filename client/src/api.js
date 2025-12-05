@@ -24,21 +24,6 @@ export async function submitClassification(formData) {
         throw new Error('No form data provided');
     }
 
-    // Validate required fields
-    const requiredFields = {
-        'Speed Min': formData.speed_knots_min,
-        'Speed Max': formData.speed_knots_max
-    };
-
-    const missingFields = Object.entries(requiredFields)
-        .filter(([_, value]) => !value)
-        .map(([field, _]) => field);
-
-    if (missingFields.length > 0) {
-        console.error('[submitClassification] Missing fields:', missingFields);
-        throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
-    }
-
     const url = `${BASE}/api/classify`;
     console.log('[submitClassification] Making POST request to:', url);
 

@@ -49,7 +49,7 @@ def generate_classification_report(query_features: Dict[str, Any], results: List
         'length_metres_min', 'length_metres_max',
         'beam_metres_min', 'beam_metres_max',
         'draught_metres_min', 'draught_metres_max',
-        'speed_knots_min', 'speed_knots_max',
+        'speed_knots_min',
         'complement_personnel_min', 'complement_personnel_max'
     ]
     if any(k in query_features for k in dimension_fields):
@@ -62,8 +62,8 @@ def generate_classification_report(query_features: Dict[str, Any], results: List
             report += f"  Beam:         {query_features.get('beam_metres_min', 'N/A')} - {query_features.get('beam_metres_max', 'N/A')} m\n"
         if 'draught_metres_min' in query_features or 'draught_metres_max' in query_features:
             report += f"  Draught:      {query_features.get('draught_metres_min', 'N/A')} - {query_features.get('draught_metres_max', 'N/A')} m\n"
-        if 'speed_knots_min' in query_features or 'speed_knots_max' in query_features:
-            report += f"  Speed:        {query_features.get('speed_knots_min', 'N/A')} - {query_features.get('speed_knots_max', 'N/A')} knots\n"
+        if 'speed_knots_min' in query_features:
+            report += f"  Speed:        {query_features.get('speed_knots_min', 'N/A')}\n"
         if 'complement_personnel_min' in query_features or 'complement_personnel_max' in query_features:
             report += f"  Complement:   {query_features.get('complement_personnel_min', 'N/A')} - {query_features.get('complement_personnel_max', 'N/A')} personnel\n"
         if 'approximate_size_category' in query_features:

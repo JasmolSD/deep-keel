@@ -68,6 +68,10 @@ class NavalSimilaritySearch:
         
         Aggregation by index happens BEFORE limiting to top_k.
         
+        When using query_features with a 'country' field, results will be
+        pre-filtered to only include ships from that country before
+        similarity ranking is applied.
+        
         Args:
             query_ship_id: Unique ID of existing ship to compare against
             query_features: Custom feature dictionary for comparison
@@ -87,7 +91,18 @@ class NavalSimilaritySearch:
         if query_ship_id is not None:
             return self._find_similar_to_existing(query_ship_id, top_k, weights, aggregate)
         elif query_features is not None:
-            return self._find_similar_to_custom(query_features, top_k, weights, aggregate)
+            # Extract country for pre-filtering (if provided and non-empty)
+            country_filter = query_features.get('country')
+            if country_filter == '' or country_filter is None:
+                country_filter = None
+            
+            return self._find_similar_to_custom(
+                query_features, 
+                top_k, 
+                weights, 
+                aggregate,
+                country_filter=country_filter
+            )
         else:
             raise ValueError("Must provide either query_ship_id or query_features")
     
@@ -139,7 +154,8 @@ class NavalSimilaritySearch:
         query_features: dict,
         top_k: int,
         weights: Dict[str, float],
-        aggregate: bool = True
+        aggregate: bool = True,
+        country_filter: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """
         Find ships similar to custom query features.
@@ -149,15 +165,26 @@ class NavalSimilaritySearch:
             top_k: Number of results to return
             weights: Feature weights
             aggregate: Whether to aggregate by index
+            country_filter: If provided, only return ships from this country
             
         Returns:
             List of similar ship results
         """
+        assert self.df is not None
+        
         # Compute similarities
         similarity_scores = self.similarity_engine.compute_similarities(    # type: ignore
             query_features=query_features,
             weights=weights
         )
+        
+        # Apply country pre-filter if specified
+        if country_filter and 'country' in self.df.columns:
+            # Create mask for non-matching countries
+            country_mask = self.df['country'] != country_filter
+            # Set similarity score to -1 for non-matching countries (will be filtered out)
+            similarity_scores[country_mask] = -1
+            print(f"Applied country filter: {country_filter}, {(~country_mask).sum()} ships remain")
         
         # Format and return results (aggregation happens here before top_k limit)
         return self.result_formatter.group_and_format_results(      # type: ignore

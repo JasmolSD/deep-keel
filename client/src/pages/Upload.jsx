@@ -74,8 +74,6 @@ const UploadPage = () => {
             'beam_metres_max': { min: 'beam_metres_min' },
             'draught_metres_min': { max: 'draught_metres_max' },
             'draught_metres_max': { min: 'draught_metres_min' },
-            'speed_knots_min': { max: 'speed_knots_max' },
-            'speed_knots_max': { min: 'speed_knots_min' },
         };
 
         const validation = rangeValidations[fieldName];
@@ -144,7 +142,6 @@ const UploadPage = () => {
             'length_metres_min', 'length_metres_max',
             'beam_metres_min', 'beam_metres_max',
             'draught_metres_min', 'draught_metres_max',
-            'speed_knots_min', 'speed_knots_max',
             // Special validations
             'launch_year', 'commission_year',
             'top_k'
@@ -161,8 +158,6 @@ const UploadPage = () => {
 
         // Validate required fields first
         const requiredFields = {
-            'Speed Min': formData.speed_knots_min,
-            'Speed Max': formData.speed_knots_max,
             'Number of Matches': formData.top_k
         };
 

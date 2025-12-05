@@ -130,7 +130,7 @@ export const DimensionsSection = ({ formData, handleInputChange }) => (
             step="10"
         /> */}
 
-        <FormRange
+        {/* <FormRange
             label="Length (metres)"
             minValue={formData.length_metres_min}
             maxValue={formData.length_metres_max}
@@ -148,9 +148,9 @@ export const DimensionsSection = ({ formData, handleInputChange }) => (
             }}
             minPlaceholder="Min"
             maxPlaceholder="Max"
-        />
+        /> */}
 
-        <FormRange
+        {/* <FormRange
             label="Beam (metres)"
             minValue={formData.beam_metres_min}
             maxValue={formData.beam_metres_max}
@@ -168,7 +168,7 @@ export const DimensionsSection = ({ formData, handleInputChange }) => (
             }}
             minPlaceholder="Min"
             maxPlaceholder="Max"
-        />
+        /> */}
 
         {/* <FormRange
             label="Draught (metres)"
@@ -190,25 +190,17 @@ export const DimensionsSection = ({ formData, handleInputChange }) => (
             maxPlaceholder="Max"
         /> */}
 
-        <FormRange
-            label="Speed (knots)"
-            required
-            minValue={formData.speed_knots_min}
-            maxValue={formData.speed_knots_max}
-            onMinChange={(e) => {
+        <FormInput
+            label="Speed (Knots)"
+            type="number"
+            placeholder="Vessel Speed"
+            value={formData.speed_knots_min}
+            onChange={(e) => {
                 const value = e.target.value;
-                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                if (value === '' || /^\d+$/.test(value)) {
                     handleInputChange('speed_knots_min', value);
                 }
             }}
-            onMaxChange={(e) => {
-                const value = e.target.value;
-                if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                    handleInputChange('speed_knots_max', value);
-                }
-            }}
-            minPlaceholder="Min"
-            maxPlaceholder="Max"
         />
 
         {/* <FormInput
@@ -231,12 +223,12 @@ export const DimensionsSection = ({ formData, handleInputChange }) => (
             onChange={(e) => handleInputChange('approximate_size_category', e.target.value)}
         />
 
-        <FormSelect
+        {/* <FormSelect
             label="Length to Beam Ratio"
             options={LENGTH_TO_BEAM_RATIOS}
             value={formData.length_to_beam_ratio}
             onChange={(e) => handleInputChange('length_to_beam_ratio', e.target.value)}
-        />
+        /> */}
     </FormSection>
 );
 

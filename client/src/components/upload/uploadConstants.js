@@ -847,7 +847,6 @@ export const INITIAL_FORM_STATE = {
     draught_metres_min: '',
     draught_metres_max: '',
     speed_knots_min: '',
-    speed_knots_max: '',
     complement_total_personnel: '',
 
     // Hull Characteristics
@@ -930,7 +929,7 @@ export const AUTOCOMPLETE_DATA = {
         'Nauru', 'Nepal', 'Netherlands', 'New Zealand', 'Nicaragua', 'Niger', 'Nigeria',
         'North Korea', 'North Macedonia', 'Norway', 'Oman', 'Pakistan', 'Palau',
         'Palestine', 'Panama', 'Papua New Guinea', 'Paraguay', 'Peru', 'Philippines',
-        'Poland', 'Portugal', 'Qatar', 'Romania', 'Russia', 'Rwanda', 'Saint Kitts and Nevis',
+        'Poland', 'Portugal', 'Qatar', 'Romania', 'Russian Federation', 'Rwanda', 'Saint Kitts and Nevis',
         'Saint Lucia', 'Saint Vincent and the Grenadines', 'Samoa', 'San Marino',
         'Sao Tome and Principe', 'Saudi Arabia', 'Senegal', 'Serbia', 'Seychelles',
         'Sierra Leone', 'Singapore', 'Slovakia', 'Slovenia', 'Solomon Islands', 'Somalia',

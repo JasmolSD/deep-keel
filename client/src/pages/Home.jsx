@@ -85,7 +85,7 @@ const HomePage = () => {
                             <div className="stat-sublabel">Real-time identification</div>
                         </div>
                         <div className="stat-card">
-                            <div className="stat-number">98.3%</div>
+                            <div className="stat-number">82%</div>
                             <div className="stat-label">Match Accuracy</div>
                             <div className="stat-sublabel">Multi-parameter similarity</div>
                         </div>
@@ -93,6 +93,11 @@ const HomePage = () => {
                             <div className="stat-number">30+</div>
                             <div className="stat-label">Search Parameters</div>
                             <div className="stat-sublabel">Physical & systems data</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-number">100+</div>
+                            <div className="stat-label">Countries</div>
+                            <div className="stat-sublabel">Represented in database</div>
                         </div>
                     </div>
                 </div>
@@ -120,14 +125,13 @@ const HomePage = () => {
                             </div>
                             <h3>Physical Dimensions</h3>
                             <p>
-                                Analyze hull length, beam width, draught, displacement tonnage,
+                                Analyze hull length, beam width, displacement tonnage,
                                 and speed characteristics with range-based matching.
                             </p>
                             <div className="feature-tags">
-                                <span>Length</span>
-                                <span>Beam</span>
-                                <span>Draught</span>
                                 <span>Speed</span>
+                                <span>Weapons</span>
+                                <span>Nationality</span>
                             </div>
                         </div>
                         <div className="feature-card">
