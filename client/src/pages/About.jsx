@@ -1,6 +1,6 @@
 // pages/About.jsx
 import './About.css'
-import jasmolPhoto from '../assets/team_photos/jasmol.jpg'
+import jasmolPhoto from '../assets/team_photos/jasmol.JPG'
 import sarahPhoto from '../assets/team_photos/sarah.jpg'
 import wesleyPhoto from '../assets/team_photos/wesley.jpg'
 import daniellePhoto from '../assets/team_photos/danielle.jpg'
