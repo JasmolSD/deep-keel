@@ -1,54 +1,54 @@
-# 🛰️ Eyes in the Sky
-### Catching the Bad Guys with Satellites and AI
+# ⚓ Deep Keel
+### AI-Powered Warship Classification System
 
-*UC Berkeley MIDS Capstone Project - Fighting trafficking one pixel at a time*
+*UC Berkeley MIDS Capstone Project - Protecting the seas with machine learning*
 
 ---
 
 ## 🎯 What's This All About?
 
-**The Problem**: Bad actors are smuggling people, drugs, and other illegal stuff across oceans and remote coastlines where nobody's watching.
+**The Problem**: Quickly identifying unknown naval vessels in the field requires extensive expertise and access to classified databases. Analysts need rapid, reliable warship identification for situational awareness.
 
-**Our Solution**: Use satellite images + smart AI to spot suspicious boats and activities. Think of it as a digital watchtower that never sleeps! 
+**Our Solution**: Deep Keel is a real-time classification engine that matches observable ship characteristics against a comprehensive naval database. Input what you can see—dimensions, superstructure, weapons systems—and get the most probable warship identification in seconds.
 
-**The Twist**: We built this with privacy first - no creepy surveillance, just helping the good guys catch the bad guys.
+**The Result**: Streamlined decision support for naval analysts, researchers, and maritime security professionals.
 
 ---
 
-## 🚀 Cool Features
+## 🚀 Key Features
 
 Our web app lets analysts:
-- 📤 **Upload satellite photos** and run AI detection
-- 🗺️ **Interactive maps** showing risky areas and suspicious boats  
-- 📊 **Risk scores** - how suspicious is this location?
-- 📈 **Time analysis** - what changed between last week and this week?
-- 📄 **Generate reports** for the people who need to know
-- 🔒 **Privacy built-in** - everything stays anonymous and aggregated
+- 🔍 **Smart Classification** - Input ship characteristics and get ranked matches
+- 📊 **Similarity Scoring** - See how closely observations match known vessels
+- 🎛️ **Flexible Queries** - Search by dimensions, weapons, sensors, or visual features
+- 📄 **Generate Reports** - Export detailed classification reports
+- 🌍 **2,000+ Vessels** - Comprehensive database of global naval ships
+- ⚡ **Real-time Results** - Instant matching and ranking
 
 ---
 
 ## 🛠️ Quick Start Guide
 
 ### What You Need First
-- **Python 3.8+** (for the AI stuff)
+- **Python 3.8+** (for the backend)
 - **Node.js 16+** (for the web app)
 - **Git** (to download the code)
 
 ### 1️⃣ Get the Code
 ```bash
 git clone <your-repo-url>
-cd eyes-in-sky
+cd deep-keel
 ```
 
-### 2️⃣ Set Up the AI Backend (Python)
+### 2️⃣ Set Up the Backend (Python)
 
 **Mac/Linux:**
 ```bash
-# Create a virtual environment (like a clean room for Python)
+# Create a virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Install all the AI libraries
+# Install dependencies
 pip install -r server/requirements.txt
 ```
 
@@ -67,10 +67,10 @@ pip install -r server/requirements.txt
 **Don't have Node.js?** Get it from [nodejs.org](https://nodejs.org/) 
 
 ```bash
-# Go to the web app folder
+# Go to the client folder
 cd client
 
-# Install all the web stuff
+# Install dependencies
 npm install
 
 # Go back to main folder
@@ -79,7 +79,7 @@ cd ..
 
 ### 4️⃣ Fire It Up! 🔥
 
-**Start the AI server:**
+**Start the backend:**
 ```bash
 # Make sure Python environment is active
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
@@ -87,141 +87,175 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 cd server
 python app.py
 ```
-*Your AI server will run on http://localhost:5000*
+*Backend runs on http://localhost:5001*
 
 **Start the web app (in a new terminal):**
 ```bash
 cd client
 npm run dev
 ```
-*Your web app will run on http://localhost:5173*
+*Frontend runs on http://localhost:5173*
 
 ---
 
-## 🧠 The AI Magic Behind the Scenes
+## 🧠 The Classification Engine
 
-We use multiple AI techniques to catch suspicious activity:
+Deep Keel uses a multi-dimensional similarity search to identify vessels:
 
-### 🔍 **Ship Detection**
-- Spots boats in satellite images, even tiny ones
-- Works in all weather (thanks to radar satellites!)
+### 📐 **Physical Dimensions**
+- Displacement, length, beam, draught
+- Speed and crew complement
+- Hull shape and bow configuration
 
-### 📡 **Tracking Analysis** 
-- Notices when boats "go dark" (turn off GPS)
-- Flags weird routes and suspicious meetups
+### 🏗️ **Superstructure Analysis**
+- Layout and height classification
+- Funnel arrangement and shape
+- Mast and radar configurations
 
-### 🌙 **Night Activity**
-- Detects unusual lights on beaches at night
-- Catches secret launches under cover of darkness
+### 🎯 **Weapons Systems**
+- Primary and secondary gun mounts
+- Missile launchers and torpedo tubes
+- Close-in weapon systems (CIWS)
 
-### 📷 **Change Detection**
-- Compares "before" and "after" satellite photos
-- Spots new boat ramps or camps that shouldn't be there
+### 📡 **Sensor Suites**
+- Air search and surface search radars
+- Fire control systems
+- Sonar configurations
 
-### 🎯 **Smart Risk Scoring**
-- Combines all the evidence into a single risk score
-- Helps analysts focus on the most suspicious stuff first
+### 🔧 **Additional Features**
+- Propulsion type
+- Helicopter facilities
+- Country of origin and ship class
 
 ---
 
-## 🔒 Privacy First (This is Important!)
+## 🔍 How Similarity Search Works
 
-We're not building Big Brother! Here's how we keep it ethical:
-
-- ✅ **No personal info** - we don't track individuals
-- ✅ **Blurry by design** - all locations are fuzzy (100-500m areas)
-- ✅ **Human oversight** - real people verify everything before action
-- ✅ **Event-focused** - we flag "something happened here" not "person X did Y"
+1. **Input Features** - Enter observable characteristics (partial data is fine!)
+2. **Multi-Index Matching** - System compares across numerical, categorical, and text features
+3. **Weighted Scoring** - Configurable weights prioritize the features you trust most
+4. **Ranked Results** - Get top matches with similarity percentages
+5. **Report Generation** - Export findings for documentation
 
 ---
 
 ## 🗂️ Project Structure
 ```
-eyes-in-sky/
-├── 🌐 client/              # The web app (React)
-├── 🤖 server/              # The AI server (Python)
+deep-keel/
+├── 🌐 client/              # React frontend
+│   ├── src/
+│   │   ├── components/     # UI components
+│   │   └── pages/          # Page views
+│   └── package.json
+├── 🤖 server/              # Flask backend
+│   ├── services/
+│   │   └── similarity_search/  # Core classification engine
+│   ├── cache/static/       # Naval ships database
+│   └── app.py              # API endpoints
 ├── 📦 .venv/               # Python virtual environment
-└── 🐳 docker-compose.yml  # Run everything with Docker
+└── 🐳 docker-compose.yml   # Container deployment
 ```
 
 ---
 
-## 🎨 What We Built With
+## 🎨 Tech Stack
 
-**🤖 AI & Backend:**
-- Python + PyTorch (the brain)
-- Satellite data from NASA/ESA
-- FastAPI (connects web to AI)
+**Backend:**
+- Python + Flask
+- Scikit-learn (similarity computation)
+- Pandas + NumPy (data processing)
+- TF-IDF vectorization (text features)
 
-**🌐 Web App:**
-- React (the interface)
-- Interactive maps (Mapbox)
-- Charts and visualizations
+**Frontend:**
+- React + Vite
+- Interactive forms
+- Real-time results display
 
-**☁️ Data Sources:**
-- Sentinel satellites (free satellite images!)
-- Ship tracking data
-- UN trafficking reports
+**Data:**
+- 2,000+ naval vessel entries
+- 40+ classification features per ship
+- Global coverage across navies
 
 ---
 
 ## 🚧 Troubleshooting
 
-**🔧 Common Fixes:**
-
 **"Port already in use"**
-- Someone else is using that port. Try `npm run dev -- --port 3001`
+- Try `npm run dev -- --port 3001` or change backend port in `.env`
 
 **"Module not found"**  
-- Check your virtual environment: `source .venv/bin/activate`
+- Verify virtual environment is active: `source .venv/bin/activate`
 
-**"Node.js issues"**
-- Try: `npm cache clean --force` then `npm install`
+**"CSV file not found"**
+- Ensure `naval_ships_data_expanded_alternate.csv` exists in `server/cache/static/`
 
-**"Python environment problems"**
-- Delete `.venv` folder and start over with step 2
+**"CORS errors"**
+- Check that both frontend and backend URLs are in the CORS configuration
 
 ---
 
-## 🚀 Want to Contribute?
+## 🚀 API Endpoints
 
-**Important**: This fights real-world trafficking, so privacy and ethics matter!
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/classify` | POST | Submit classification query |
+| `/api/stats` | GET | Get database statistics |
+| `/api/ship-classes` | GET | List all ship classes |
+| `/api/ship/<id>` | GET | Get specific ship details |
+| `/api/report/<id>` | GET | Download classification report |
+
+---
+
+## 📊 Example Query
+
+```json
+{
+  "query_features": {
+    "ship_type": "Frigate",
+    "displacement_full_load_tons_min": 3000,
+    "displacement_full_load_tons_max": 5000,
+    "primary_gun_mount_size": "Medium (30mm-76mm)",
+    "missile_launcher_visible": "y"
+  },
+  "top_k": 10
+}
+```
+
+---
+
+## 🤝 Contributing
 
 1. 🍴 Fork the repo
 2. 🌿 Create your feature branch
-3. 🔒 **Privacy check** - make sure no personal data leaks
-4. ✅ Test everything thoroughly  
-5. 📤 Submit a pull request
+3. ✅ Test thoroughly
+4. 📤 Submit a pull request
 
 ---
 
-## 📚 The Bigger Picture
+## 📚 Use Cases
 
-**By the numbers:**
-- 50+ million people in modern slavery worldwide
-- $236 billion generated by forced labor annually
-- $1.5+ trillion in trafficking and counterfeiting
-
-**Our impact**: Even small improvements in detection can save lives and disrupt criminal networks.
+- **Naval Intelligence** - Rapid vessel identification from reconnaissance data
+- **Maritime Research** - Comparative analysis of naval capabilities
+- **Training & Education** - Teaching ship recognition fundamentals
+- **Historical Analysis** - Studying evolution of naval designs
 
 ---
 
-## 📞 Get in Touch
+## 📞 Contact
 
-**Team**: UC Berkeley MIDS Students  
-**Course**: MIDS 210 Capstone  
+**Team**: UC Berkeley MIDS Capstone  
+**Course**: MIDS 210  
 **Lead**: Jasmol Singh Dhesi
 
-Questions? Issues? Cool ideas? Open an issue or reach out through UC Berkeley MIDS!
+Questions? Issues? Open an issue or reach out through UC Berkeley MIDS!
 
 ---
 
 ## 🙏 Acknowledgments
 
-Thanks to:
 - UC Berkeley MIDS Program
-- NASA/ESA for free satellite data
-- Open source community
-- Organizations fighting trafficking worldwide
+- Open source naval databases
+- Jane's Fighting Ships (reference)
+- The global open-source intelligence community
 
-*Built with ❤️ and a mission to make the world safer*
+*Built with ⚓ for maritime situational awareness*
