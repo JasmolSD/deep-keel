@@ -44,7 +44,7 @@ const HomePage = () => {
                         Naval Intelligence System
                     </div>
                     <h1 className="hero-title">
-                        Sea Sentinel
+                        Deep Keel
                         <span className="hero-highlight">Classification Engine</span>
                     </h1>
                     <p className="hero-description">
@@ -105,7 +105,7 @@ const HomePage = () => {
                         <span className="section-tag">SYSTEM CAPABILITIES</span>
                         <h2 className="section-title">Multi-Parameter Classification</h2>
                         <p className="section-description">
-                            Sea Sentinel analyzes vessel characteristics across four distinct feature categories,
+                            Deep Keel analyzes vessel characteristics across four distinct feature categories,
                             computing weighted similarity scores to identify matching ship classes.
                         </p>
                     </div>
@@ -209,7 +209,7 @@ const HomePage = () => {
                 <div className="cta-content">
                     <h2>Ready to Begin Classification?</h2>
                     <p>
-                        Access the Sea Sentinel classification engine and identify
+                        Access the Deep Keel classification engine and identify
                         naval vessels with multi-parameter similarity matching.
                     </p>
                     <button className="btn-primary btn-large" onClick={handleStart}>

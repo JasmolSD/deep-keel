@@ -11,7 +11,7 @@ const AboutPage = () => {
             <div className="about-container">
                 <div className="about-header">
                     <span className="about-tag">ABOUT THE PROJECT</span>
-                    <h2>Sea Sentinel</h2>
+                    <h2>Deep Keel</h2>
                     <p className="lead">
                         A real-time warship classification engine designed for maritime decision support.
                         Input observed vessel characteristics and receive instant identification with
@@ -25,8 +25,8 @@ const AboutPage = () => {
                         <p>
                             Maritime situational awareness requires rapid identification of naval vessels
                             from partial observations. Traditional methods rely on manual reference lookups
-                            across extensive documentation — a time-consuming process that delays critical
-                            decision-making. Sea Sentinel automates this classification workflow, enabling
+                            across extensive documentation, a time-consuming process that delays critical
+                            decision-making. Deep Keel automates this classification workflow, enabling
                             analysts to match observed characteristics against a comprehensive database of
                             over 3,000 naval vessels in seconds.
                         </p>
