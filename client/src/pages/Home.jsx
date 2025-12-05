@@ -90,7 +90,7 @@ const HomePage = () => {
                             <div className="stat-sublabel">Multi-parameter similarity</div>
                         </div>
                         <div className="stat-card">
-                            <div className="stat-number">40+</div>
+                            <div className="stat-number">30+</div>
                             <div className="stat-label">Search Parameters</div>
                             <div className="stat-sublabel">Physical & systems data</div>
                         </div>

@@ -71,7 +71,7 @@ export const IdentificationSection = ({
             onBlur={() => hideAutocompleteSuggestions('country')}
         />
 
-        <FormAutocomplete
+        {/* <FormAutocomplete
             label="Base Port"
             placeholder="e.g., Norfolk"
             value={formData.base_port}
@@ -86,7 +86,7 @@ export const IdentificationSection = ({
                 selectSuggestion('base_port', value);
             }}
             onBlur={() => hideAutocompleteSuggestions('base_port')}
-        />
+        /> */}
 
         <FormInput
             label="Ship Class"
@@ -116,7 +116,7 @@ export const DimensionsSection = ({ formData, handleInputChange }) => (
         title="Physical Dimensions"
         description="Ship measurements and specifications"
     >
-        <FormInput
+        {/* <FormInput
             label="Displacement (tons)"
             type="number"
             placeholder="Full load displacement"
@@ -128,7 +128,7 @@ export const DimensionsSection = ({ formData, handleInputChange }) => (
                 }
             }}
             step="10"
-        />
+        /> */}
 
         <FormRange
             label="Length (metres)"
@@ -170,7 +170,7 @@ export const DimensionsSection = ({ formData, handleInputChange }) => (
             maxPlaceholder="Max"
         />
 
-        <FormRange
+        {/* <FormRange
             label="Draught (metres)"
             minValue={formData.draught_metres_min}
             maxValue={formData.draught_metres_max}
@@ -188,7 +188,7 @@ export const DimensionsSection = ({ formData, handleInputChange }) => (
             }}
             minPlaceholder="Min"
             maxPlaceholder="Max"
-        />
+        /> */}
 
         <FormRange
             label="Speed (knots)"
@@ -211,7 +211,7 @@ export const DimensionsSection = ({ formData, handleInputChange }) => (
             maxPlaceholder="Max"
         />
 
-        <FormInput
+        {/* <FormInput
             label="Complement (personnel)"
             type="number"
             placeholder="Total crew"
@@ -222,7 +222,7 @@ export const DimensionsSection = ({ formData, handleInputChange }) => (
                     handleInputChange('complement_total_personnel', value);
                 }
             }}
-        />
+        /> */}
 
         <FormSelect
             label="Size Category"
@@ -364,26 +364,26 @@ export const SuperstructureSection = ({ formData, handleInputChange }) => (
             onChange={(e) => handleInputChange('radar_configuration', e.target.value)}
         />
 
-        <FormInput
+        {/* <FormInput
             label="Air Search Radar"
             placeholder="e.g., SPY-1D, AN/SPS-48"
             value={formData.radar_airsearch}
             onChange={(e) => handleInputChange('radar_airsearch', e.target.value)}
-        />
+        /> */}
 
-        <FormInput
+        {/* <FormInput
             label="Surface Search Radar"
             placeholder="e.g., AN/SPS-67"
             value={formData.radar_surfacesearch}
             onChange={(e) => handleInputChange('radar_surfacesearch', e.target.value)}
-        />
+        /> */}
 
-        <FormInput
+        {/* <FormInput
             label="Fire Control Radar"
             placeholder="e.g., AN/SPG-62"
             value={formData.radar_firecontrol}
             onChange={(e) => handleInputChange('radar_firecontrol', e.target.value)}
-        />
+        /> */}
     </FormSection>
 );
 
@@ -392,7 +392,7 @@ export const WeaponsSection = ({ formData, handleInputChange }) => (
         title="Weapons & Systems"
         description="Armament, sensors, and combat systems"
     >
-        <FormInput
+        {/* <FormInput
             label="Main Machinery"
             placeholder="e.g., 4 x Gas Turbines"
             value={formData.main_machinery}
@@ -418,7 +418,7 @@ export const WeaponsSection = ({ formData, handleInputChange }) => (
                 }
             }}
             step="0.01"
-        />
+        /> */}
 
         <FormInput
             label="Main Gun Turrets"
@@ -476,19 +476,19 @@ export const WeaponsSection = ({ formData, handleInputChange }) => (
             }}
         />
 
-        <FormInput
+        {/* <FormInput
             label="Missile Launchers"
             placeholder="e.g., Mk 41 VLS (96 cells)"
             value={formData.missile_launchers}
             onChange={(e) => handleInputChange('missile_launchers', e.target.value)}
-        />
+        /> */}
 
-        <FormInput
+        {/* <FormInput
             label="CIWS"
             placeholder="e.g., 2 x Phalanx"
             value={formData.CIWS}
             onChange={(e) => handleInputChange('CIWS', e.target.value)}
-        />
+        /> */}
 
         <FormInput
             label="CIWS Positions"
@@ -497,12 +497,12 @@ export const WeaponsSection = ({ formData, handleInputChange }) => (
             onChange={(e) => handleInputChange('CIWS_positions', e.target.value)}
         />
 
-        <FormInput
+        {/* <FormInput
             label="Sonar"
             placeholder="e.g., AN/SQS-53C"
             value={formData.sonar}
             onChange={(e) => handleInputChange('sonar', e.target.value)}
-        />
+        /> */}
     </FormSection>
 );
 
@@ -518,7 +518,8 @@ export const AviationSection = ({ formData, handleInputChange }) => (
             onChange={(value) => handleInputChange('flight_deck', value)}
             options={[
                 { value: 'True', label: 'Yes' },
-                { value: 'False', label: 'No' }
+                { value: 'False', label: 'No' },
+                { value: '', label: 'N/A' }
             ]}
         />
 
@@ -529,11 +530,12 @@ export const AviationSection = ({ formData, handleInputChange }) => (
             onChange={(value) => handleInputChange('hangar', value)}
             options={[
                 { value: 'True', label: 'Yes' },
-                { value: 'False', label: 'No' }
+                { value: 'False', label: 'No' },
+                { value: '', label: 'N/A' }
             ]}
         />
 
-        <FormInput
+        {/* <FormInput
             label="Hangar Capacity"
             type="number"
             placeholder="Number of aircraft"
@@ -545,7 +547,7 @@ export const AviationSection = ({ formData, handleInputChange }) => (
                     handleInputChange('hangar_capacity', num === '' ? '' : num.toString());
                 }
             }}
-        />
+        /> */}
 
         <FormRadioGroup
             label="Helicopter Platform"
@@ -554,11 +556,12 @@ export const AviationSection = ({ formData, handleInputChange }) => (
             onChange={(value) => handleInputChange('helicopter_platform', value)}
             options={[
                 { value: 'True', label: 'Yes' },
-                { value: 'False', label: 'No' }
+                { value: 'False', label: 'No' },
+                { value: '', label: 'N/A' }
             ]}
         />
 
-        <FormInput
+        {/* <FormInput
             label="Helicopter Capacity"
             type="number"
             placeholder="Number of helicopters"
@@ -570,7 +573,7 @@ export const AviationSection = ({ formData, handleInputChange }) => (
                     handleInputChange('helicopter_capacity', num === '' ? '' : num.toString());
                 }
             }}
-        />
+        /> */}
     </FormSection>
 );
 
@@ -579,14 +582,14 @@ export const BuildInfoSection = ({ formData, handleInputChange }) => (
         title="Build Information"
         description="Shipyard and construction details"
     >
-        <FormInput
+        {/* <FormInput
             label="Builder"
             placeholder="e.g., Bath Iron Works"
             value={formData.builder}
             onChange={(e) => handleInputChange('builder', e.target.value)}
-        />
+        /> */}
 
-        <FormInput
+        {/* <FormInput
             label="Launch Year"
             type="number"
             placeholder="e.g., 1991"
@@ -598,9 +601,9 @@ export const BuildInfoSection = ({ formData, handleInputChange }) => (
                     handleInputChange('launch_year', num === '' ? '' : num.toString());
                 }
             }}
-        />
+        /> */}
 
-        <FormInput
+        {/* <FormInput
             label="Commission Year"
             type="number"
             placeholder="e.g., 1992"
@@ -612,7 +615,7 @@ export const BuildInfoSection = ({ formData, handleInputChange }) => (
                     handleInputChange('commission_year', num === '' ? '' : num.toString());
                 }
             }}
-        />
+        /> */}
     </FormSection>
 );
 
@@ -625,7 +628,7 @@ export const MatchSettingsSection = ({
         description="Configure search parameters"
     >
         <FormInput
-            label="Number of Matches"
+            label="Number of Matches (0-10)"
             placeholder="Enter 1-10"
             value={formData.top_k}
             onChange={(e) => {

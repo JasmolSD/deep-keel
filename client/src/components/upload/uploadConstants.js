@@ -891,10 +891,10 @@ export const INITIAL_FORM_STATE = {
     sonar: '',
 
     // Aviation Facilities
-    flight_deck: 'False',
-    hangar: 'False',
+    flight_deck: '',
+    hangar: '',
     hangar_capacity: '',
-    helicopter_platform: 'False',
+    helicopter_platform: '',
     helicopter_capacity: '',
 
     // Build Information

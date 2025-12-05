@@ -9,7 +9,7 @@ import {
     SuperstructureSection,
     WeaponsSection,
     AviationSection,
-    BuildInfoSection,
+    // BuildInfoSection,
     MatchSettingsSection
 } from '../components/upload/FormSections'
 import { INITIAL_FORM_STATE } from '../components/upload/uploadConstants'
@@ -337,7 +337,7 @@ const UploadPage = () => {
                     <SuperstructureSection {...sectionProps} />
                     <WeaponsSection {...sectionProps} />
                     <AviationSection {...sectionProps} />
-                    <BuildInfoSection {...sectionProps} />
+                    {/* <BuildInfoSection {...sectionProps} /> */}
                     <MatchSettingsSection
                         formData={formData}
                         handleInputChange={handleInputChange}
