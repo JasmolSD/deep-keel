@@ -186,7 +186,7 @@ const AboutPage = () => {
                                 <span className="stat-desc">Countries</span>
                             </div>
                             <div className="stat-item">
-                                <span className="stat-value">330+</span>
+                                <span className="stat-value">30+</span>
                                 <span className="stat-desc">Parameters</span>
                             </div>
                             <div className="stat-item">
