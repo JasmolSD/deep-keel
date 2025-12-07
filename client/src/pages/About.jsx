@@ -100,42 +100,33 @@ const AboutPage = () => {
                         <div className="feature-categories">
                             <div className="category-item">
                                 <div className="category-header">
-                                    <span className="category-weight">20%</span>
+                                    <span className="category-weight">30%</span>
                                     <h4>Numerical Features</h4>
                                 </div>
                                 <p>
-                                    Length, beam, draught, speed, displacement, complement,
-                                    superstructure blocks, funnels, gun mounts, torpedo tubes
+                                    Length, beam, draught, speed, and
+                                    other quantitative features.
                                 </p>
                             </div>
                             <div className="category-item">
                                 <div className="category-header">
-                                    <span className="category-weight">20%</span>
-                                    <h4>Categorical Features</h4>
+                                    <span className="category-weight">10%</span>
+                                    <h4>Categorical and Text Features</h4>
                                 </div>
                                 <p>
                                     Hull form, bow shape, superstructure layout, funnel arrangement,
-                                    mast configuration, radar configuration, size category
+                                    and other descriptive categorical and text fields analyzed
+                                    using TF-IDF vectorization.
                                 </p>
                             </div>
                             <div className="category-item">
                                 <div className="category-header">
-                                    <span className="category-weight">20%</span>
-                                    <h4>Text Features</h4>
-                                </div>
-                                <p>
-                                    Ship type, ship role, and other descriptive text fields
-                                    analyzed using TF-IDF vectorization
-                                </p>
-                            </div>
-                            <div className="category-item">
-                                <div className="category-header">
-                                    <span className="category-weight">40%</span>
+                                    <span className="category-weight">60%</span>
                                     <h4>Binary Features</h4>
                                 </div>
                                 <p>
                                     Flight deck presence, helicopter platform, hangar facilities,
-                                    and other boolean characteristics
+                                    and other boolean characteristics.
                                 </p>
                             </div>
                         </div>

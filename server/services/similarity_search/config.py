@@ -62,10 +62,10 @@ BINARY_FEATURES = ['flight_deck', 'helicopter_platform', 'hangar']
 
 # Default similarity weights
 DEFAULT_WEIGHTS: Dict[str, float] = {
-    'numerical': 0.2,
-    'categorical': 0.2,
-    'text': 0.2,
-    'binary': 0.4,
+    'numerical': 0.3,
+    'categorical': 0.1,
+    'text': 0.0,
+    'binary': 0.6,
 }
 
 # Similarity threshold (30%)
