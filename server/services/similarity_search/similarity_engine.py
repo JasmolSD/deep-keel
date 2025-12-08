@@ -141,10 +141,10 @@ class SimilarityEngine:
         """
         if weights is None:
             weights = {
-                'numerical': 0.35,
-                'categorical': 0.30,
-                'text': 0.20,
-                'binary': 0.15
+                'numerical': 0.30,
+                'categorical': 0.1,
+                'text': 0.00,
+                'binary': 0.60
             }
 
         if query_idx is not None:
