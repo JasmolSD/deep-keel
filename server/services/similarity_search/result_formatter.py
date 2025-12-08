@@ -258,6 +258,8 @@ class ResultFormatter:
         Format results from filter-based search.
         
         Aggregation happens BEFORE limiting to top_k.
+        Applies similarity threshold to filter out low-confidence similarity matches.
+        Exact filter matches are always included regardless of similarity score.
         
         Args:
             filtered_df: Filtered DataFrame
@@ -297,7 +299,9 @@ class ResultFormatter:
                         'length_metres': row.get('length_metres', 0),
                         'beam_metres': row.get('beam_metres', 0),
                         'draught_metres': row.get('draught_metres', 0),
-                        'unique_id': row.get('unique_id', str(row.name))
+                        'unique_id': row.get('unique_id', str(row.name)),
+                        'similarity_score': row.get('similarity_score', 1.0),
+                        'match_type': row.get('match_type', 'filter')
                     }
                 
                 if pd.notna(row.get('ship_name')):
@@ -319,12 +323,32 @@ class ResultFormatter:
                 del data['hull_numbers']
                 results.append(data)
             
-            # Limit to top_k AFTER aggregation
-            return results[:top_k]
+            # Apply similarity threshold - keep filter matches, filter similarity matches
+            filtered_results = []
+            for result in results:
+                match_type = result.get('match_type', 'filter')
+                similarity_score = result.get('similarity_score', 1.0)
+                
+                # Always include exact filter matches
+                if match_type == 'filter':
+                    filtered_results.append(result)
+                # Only include similarity matches above threshold
+                elif similarity_score >= SIMILARITY_THRESHOLD:
+                    filtered_results.append(result)
+            
+            # Limit to top_k AFTER filtering
+            return filtered_results[:top_k]
         else:
             # No aggregation
             results = []
-            for _, row in filtered_df.head(top_k).iterrows():
+            for _, row in filtered_df.iterrows():
+                match_type = row.get('match_type', 'filter')
+                similarity_score = row.get('similarity_score', 1.0)
+                
+                # Apply threshold filtering for similarity matches
+                if match_type == 'similarity' and similarity_score < SIMILARITY_THRESHOLD:
+                    continue
+                
                 results.append({
                     'ship_name': row.get('ship_name', 'Unknown'),
                     'hull_number': row.get('hull_number', 'N/A'),
@@ -338,5 +362,12 @@ class ResultFormatter:
                     'length_metres': row.get('length_metres', 0),
                     'beam_metres': row.get('beam_metres', 0),
                     'draught_metres': row.get('draught_metres', 0),
+                    'similarity_score': similarity_score,
+                    'match_type': match_type
                 })
+                
+                # Stop when we have enough results
+                if len(results) >= top_k:
+                    break
+            
             return results

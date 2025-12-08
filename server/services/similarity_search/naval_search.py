@@ -7,7 +7,7 @@ UPDATED: Aggregation now happens during search phase, before limiting to top_k
 
 import pandas as pd
 from typing import List, Dict, Any, Optional, Union
-from .config import DEFAULT_WEIGHTS, DEFAULT_TOP_K, TEXT_SEARCH_FEATURES
+from .config import DEFAULT_WEIGHTS, DEFAULT_TOP_K, TEXT_SEARCH_FEATURES, SIMILARITY_THRESHOLD
 from .data_preprocessor import DataPreprocessor
 from .similarity_engine import SimilarityEngine
 from .result_formatter import ResultFormatter
@@ -462,6 +462,15 @@ class NavalSimilaritySearch:
                 result['similarity_score'] = min(fill_score / 2.0, 0.99)
             else:
                 result['similarity_score'] = 0.3  # Default for aggregated results
+        
+        # CRITICAL: Filter out results below similarity threshold
+        # Only apply threshold to similarity matches (filter matches are always included)
+        additional_results = [
+            r for r in additional_results 
+            if r.get('similarity_score', 0) >= SIMILARITY_THRESHOLD
+        ]
+        
+        print(f"After threshold filtering ({SIMILARITY_THRESHOLD*100}%): {len(additional_results)} results remain")
         
         # Limit to remaining_slots
         additional_results = additional_results[:remaining_slots]
